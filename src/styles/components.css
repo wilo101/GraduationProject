@@ -1,0 +1,186 @@
+/* Sidebar */
+.sidebar {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
+    border-right: var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-md);
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: 40px;
+    padding: var(--spacing-sm);
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-info .greeting {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.user-info .username {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    flex: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: 16px;
+    border-radius: var(--border-radius-md);
+    color: var(--color-text-muted);
+    transition: all 0.2s;
+    text-align: left;
+    font-weight: 500;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-main);
+}
+
+.nav-item.active {
+    border-left: 3px solid var(--color-primary);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+}
+
+.btn-deploy {
+    width: 100%;
+    padding: 16px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Compact Status Card */
+.status-compact {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+}
+
+.status-compact .icon {
+    font-size: 24px;
+    color: var(--color-text-muted);
+}
+
+.status-compact .info {
+    display: flex;
+    flex-direction: column;
+}
+
+.status-compact .label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.status-compact .value {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Map Visualization */
+.map-display {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--border-radius-sm);
+    height: 200px;
+    position: relative;
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+}
+
+.map-room {
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    position: relative;
+}
+
+.map-room.kitchen {
+    flex: 1;
+}
+
+.map-room.hallway {
+    flex: 0.5;
+}
+
+.map-room.living-room {
+    flex: 2;
+    border: 1px solid var(--color-primary);
+}
+
+.robot-icon {
+    font-size: 24px;
+    position: absolute;
+    bottom: 20px;
+    right: 40px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.btn-emergency {
+    background: linear-gradient(45deg, #ff0000, #990000);
+    color: white;
+    width: 100%;
+    padding: 30px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 40px;
+    box-shadow: 0 10px 30px rgba(255, 0, 0, 0.4);
+}
