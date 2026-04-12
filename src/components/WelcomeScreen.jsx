@@ -17,7 +17,7 @@ const WelcomeScreen = ({ onStart }) => {
                     <span style={{ fontWeight: '500' }}>Good Morning</span>
                 </div>
                 <h1 className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: '300', marginBottom: '0.5rem' }}>
-                    Welcome Home
+                    Welcome
                 </h1>
                 <p style={{ color: 'var(--text-secondary)' }}>
                     System is <strong style={{ color: 'var(--accent-success)' }}>Active & Ready</strong>. All sensors are nominal.

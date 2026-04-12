@@ -15,7 +15,7 @@ const Automation = () => {
                         <h2 style={{ fontSize: '1.25rem' }}>Daily Patrol</h2>
                     </div>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                        Robot patrols all rooms every day at 09:00 AM and 09:00 PM.
+                        Robot patrols configured zones on a fixed schedule (e.g. 09:00 and 21:00 daily).
                     </p>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <span style={{ padding: '0.25rem 0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--status-success)', borderRadius: '1rem', fontSize: '0.875rem' }}>Active</span>

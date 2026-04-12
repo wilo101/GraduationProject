@@ -1,0 +1,28 @@
+Playwright E2E — honest limits (not “every atom”)
+
+Playwright web server env
+- `.env.local` may contain VITE_E2E_AUTH=1; Playwright starts Vite with VITE_E2E_AUTH=0 so register/login tests see the real forms (Vite does not override an env var already set).
+- If `reuseExistingServer` is true and you already ran `npm run dev` with mock auth on :5173, stop it or set CI=1 for a clean server.
+
+What these tests DO cover
+- Email register form → Supabase signup API (with .env.local keys).
+- Google button → navigation to Supabase/Google OAuth (starts the real flow).
+- Phone register UI: request code → OTP field → wrong code → error → clear field → type again (no Apple; Apple was removed from the UI).
+- Dashboard smoke when PW_E2E_AUTH=1 (dev-only mock session in AuthContext).
+
+What they CANNOT fully automate without extra infrastructure
+- Real SMS OTP content: the 6-digit code lives on a phone or provider inbox; tests use wrong codes + UI clearing unless you add a test hook (e.g. Supabase hook or fixed test number).
+- Finishing Google sign-in inside Google’s UI (captcha, account picker, 2FA).
+- Cross-browser matrix (this config uses Chromium only unless you add projects).
+- Visual regression, load/perf, full accessibility audit (axe), and every random diagnostics branch.
+- Production gh-pages URL unless you set baseURL / webServer to match.
+
+Stronger runs
+- npm run test:e2e:install   (download Chromium browsers once)
+- npm run test:e2e          (public auth flows; needs .env.local for Supabase tests)
+- npm run test:e2e:auth     (mock-authenticated dashboard)
+- npm run test:e2e:ui       (debug)
+
+MCP vs @playwright/test
+- Cursor Playwright MCP: great for interactive exploration.
+- Repo tests: repeatable in CI, reports under playwright-report/, same actions codified here.

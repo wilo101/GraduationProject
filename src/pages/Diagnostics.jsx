@@ -4,8 +4,8 @@ import { Activity, CheckCircle, AlertCircle, Play, Loader, Shield, Wifi, Battery
 const HealthCheck = () => {
     const [systems, setSystems] = useState([
         { id: 1, name: 'Main Engine', icon: Server, status: 'idle' },
-        { id: 2, name: 'Smart Sensors', icon: Eye, status: 'idle' },
-        { id: 3, name: 'Home Connection', icon: Wifi, status: 'idle' },
+        { id: 2, name: 'Field sensors', icon: Eye, status: 'idle' },
+        { id: 3, name: 'Fleet link', icon: Wifi, status: 'idle' },
         { id: 4, name: 'Battery Health', icon: Battery, status: 'idle' },
     ]);
     const [isGlobalRunning, setIsGlobalRunning] = useState(false);
@@ -54,7 +54,7 @@ const HealthCheck = () => {
                     <Shield size={32} color="var(--accent-blue)" />
                     System Health Check
                 </h1>
-                <p style={{ color: 'var(--text-secondary)' }}>Ensure your home protection systems are running perfectly.</p>
+                <p style={{ color: 'var(--text-secondary)' }}>Verify field systems and fleet connectivity before operations.</p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -82,7 +82,7 @@ const HealthCheck = () => {
                         }}
                     >
                         {isGlobalRunning ? <Loader className="spin" size={20} /> : <Play size={20} fill="black" />}
-                        {isGlobalRunning ? 'Scanning Home...' : 'Start Scan'}
+                        {isGlobalRunning ? 'Scanning site…' : 'Start Scan'}
                     </button>
                 </div>
 

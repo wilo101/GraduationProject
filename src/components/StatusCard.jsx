@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Battery, Thermometer, Droplets, Gauge } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Battery, Thermometer, Droplets, Gauge, Activity } from 'lucide-react';
 
 const StatusCard = ({
     type = 'generic',
@@ -9,24 +9,49 @@ const StatusCard = ({
     maxValue = 100,
     threshold = 20,
     isInverseThreshold = false, // if true, Higher is worse (not used for battery/water usually, maybe temp?)
-    onValueChange // for slider
+    onValueChange, // for slider
+    updatedAt // optional: ms timestamp or Date
 }) => {
+    const mountedAtRef = useRef(Date.now())
+    const [nowTick, setNowTick] = useState(Date.now())
+
+    useEffect(() => {
+        // Live-updating "Updated X min ago"
+        const t = setInterval(() => setNowTick(Date.now()), 15_000)
+        return () => clearInterval(t)
+    }, [])
+
+    const updatedMs = useMemo(() => {
+        if (updatedAt instanceof Date) return updatedAt.getTime()
+        if (typeof updatedAt === 'number') return updatedAt
+        return mountedAtRef.current
+    }, [updatedAt])
+
+    const updatedMinAgo = useMemo(() => {
+        const diff = Math.max(0, nowTick - updatedMs)
+        return Math.floor(diff / 60_000)
+    }, [nowTick, updatedMs])
 
     // Determine Status
     const status = useMemo(() => {
         const numVal = parseFloat(value);
         if (type === 'pressure') return 'neutral'; // Manual control
+        if (isInverseThreshold) {
+            if (numVal >= threshold) return 'critical'
+            if (numVal >= threshold * 0.85) return 'warning'
+            return 'good'
+        }
         if (numVal <= threshold) return 'critical';
         if (numVal <= threshold * 1.5) return 'warning';
         return 'good';
-    }, [value, threshold, type]);
+    }, [value, threshold, type, isInverseThreshold]);
 
     // Styles based on status
     const statusColors = {
         good: 'var(--status-good)',
         warning: 'var(--status-warning)',
         critical: 'var(--status-critical)',
-        neutral: 'var(--accent-primary)'
+        neutral: 'var(--status-neutral)'
     };
 
     const activeColor = statusColors[status];
@@ -57,7 +82,7 @@ const StatusCard = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{
                     width: 38, height: 38, borderRadius: '50%',
-                    background: `rgba(255,255,255,0.05)`,
+                    background: `var(--status-icon-bg, rgba(255,255,255,0.05))`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: activeColor
                 }}>
@@ -67,31 +92,48 @@ const StatusCard = ({
                     <span style={{
                         fontSize: '0.7rem', fontWeight: 600,
                         color: activeColor, textTransform: 'uppercase', letterSpacing: '0.05em',
-                        background: 'rgba(0,0,0,0.3)', padding: '0.2rem 0.5rem', borderRadius: 8
+                        background: 'var(--status-badge-bg, rgba(0,0,0,0.3))', padding: '0.2rem 0.5rem', borderRadius: 8
                     }}>
-                        {status === 'good' ? 'Normal' : status === 'warning' ? 'Low' : 'Critical'}
+                        {status === 'good' ? 'Normal' : status === 'warning' ? (isInverseThreshold ? 'High' : 'Low') : 'Critical'}
                     </span>
                 )}
             </div>
 
             {/* Value Area */}
             <div style={{ marginTop: 'auto' }}>
-                <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                <h4 style={{ fontSize: '0.85rem', color: 'var(--ops-metric-emphasis)', marginBottom: '0.25rem', fontWeight: 600 }}>
                     {label}
                 </h4>
 
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
-                    <span style={{ fontSize: '1.75rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
+                    <span
+                        className="numeric"
+                        style={{
+                            fontSize: '1.75rem',
+                            fontWeight: 600,
+                            color: 'var(--ops-metric-emphasis)',
+                            fontFamily: 'var(--font-heading)',
+                        }}
+                    >
                         {value}
                     </span>
-                    <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{unit}</span>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--ops-metric-unit)' }}>{unit}</span>
                 </div>
 
                 {/* Subtext explaining threshold */}
                 {type !== 'pressure' && (
-                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                        Alert below {threshold}{unit}
+                    <p style={{ fontSize: '0.75rem', color: 'var(--ops-metric-caption)', marginTop: '0.25rem' }}>
+                        {isInverseThreshold ? 'Alert above ' : 'Alert below '}
+                        {threshold}
+                        {unit}
                     </p>
+                )}
+
+                {/* Updated timestamp */}
+                {type !== 'pressure' && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--ops-metric-caption)', marginTop: 2 }}>
+                        Updated {updatedMinAgo} min ago
+                    </div>
                 )}
 
                 {/* Slider for Pressure */}
@@ -112,14 +154,17 @@ const StatusCard = ({
             {/* Progress Bar for non-slider items */}
             {type !== 'pressure' && (
                 <div style={{
-                    width: '100%', height: 4, background: 'rgba(255,255,255,0.1)',
-                    borderRadius: 2, marginTop: '0.75rem', overflow: 'hidden'
+                    width: '100%', height: 4,
+                    background: 'var(--progress-track-bg, rgba(255,255,255,0.1))',
+                    borderRadius: 2, marginTop: '0.75rem', overflow: 'hidden',
+                    boxShadow: 'var(--progress-track-shadow, none)'
                 }}>
                     <div style={{
                         width: `${Math.min((parseFloat(value) / maxValue) * 100, 100)}%`,
                         height: '100%',
                         background: activeColor,
-                        transition: 'width 0.5s ease-out'
+                        transition: 'width 0.5s ease-out',
+                        boxShadow: 'var(--progress-bar-glow, none)'
                     }} />
                 </div>
             )}

@@ -24,13 +24,13 @@ const MapPanel = () => {
                     <div>
                         <h3 style={{
                             fontFamily: 'var(--font-ui)', fontSize: '0.9rem', fontWeight: 600,
-                            letterSpacing: '0.05em', color: 'var(--text-primary)'
+                            letterSpacing: '0.05em', color: 'var(--ops-metric-emphasis)'
                         }}>
                             TACTICAL MAP
                         </h3>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '2px' }}>
                             <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--status-online)' }} />
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--ops-metric-caption)', fontFamily: 'var(--font-mono)' }}>
                                 GPS LOCK: 34.0522°N, 118.2437°W
                             </span>
                         </div>

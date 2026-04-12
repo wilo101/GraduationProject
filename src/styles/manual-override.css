@@ -1,0 +1,338 @@
+.mo-shell {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 2rem;
+    gap: 1.5rem;
+    overscroll-behavior: contain;
+}
+
+.mo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.mo-title {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.mo-title h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--font-heading);
+}
+
+.mo-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.42rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: var(--shadow-inset-glass);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.mo-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: rgba(148, 163, 184, 0.55);
+    box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.08);
+}
+
+.mo-indicator--engaged {
+    color: rgba(248, 113, 113, 0.98);
+    border-color: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.mo-indicator--engaged .mo-dot {
+    background: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.14), 0 0 22px rgba(239, 68, 68, 0.35);
+    animation: moPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes moPulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.95;
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.75;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.95;
+    }
+}
+
+.mo-engage {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.65rem 1.05rem;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    transition: transform var(--anim-fast), background var(--anim-med), border-color var(--anim-med), box-shadow var(--anim-med),
+        color var(--anim-med);
+    box-shadow: 0 10px 24px rgba(4, 6, 14, 0.26);
+}
+
+.mo-engage:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
+    transform: translateY(-1px);
+}
+
+.mo-engage:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.mo-engage:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.mo-engage--engaged {
+    color: #fee2e2;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.22) 0%, rgba(185, 28, 28, 0.16) 100%);
+    border-color: rgba(239, 68, 68, 0.35);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.08) inset, 0 18px 40px rgba(239, 68, 68, 0.12);
+}
+
+.mo-metrics {
+    padding: 0.55rem 0.85rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    color: rgba(226, 232, 240, 0.85);
+    box-shadow: var(--shadow-inset-glass);
+}
+
+/* Manual Override controls */
+.mo-controls {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(2.5rem, 6vw, 6rem);
+    padding-bottom: 2rem;
+}
+
+.mo-panel {
+    padding: 2.25rem;
+    border-radius: var(--radius-xl);
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 18px 55px rgba(4, 6, 14, 0.45);
+    backdrop-filter: blur(18px);
+}
+
+.mo-stick-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.mo-stick-base {
+    width: 144px;
+    height: 144px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0.15) 28%, rgba(0, 0, 0, 0.4) 100%),
+        linear-gradient(135deg, #13151e 0%, #090a0e 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55), inset 0 0 40px rgba(0, 0, 0, 0.7);
+    position: relative;
+    display: grid;
+    place-items: center;
+    touch-action: none;
+    user-select: none;
+}
+
+.mo-stick-base::after {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border-radius: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.mo-stick-knob {
+    width: 72px;
+    height: 72px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.06) 22%, rgba(0, 0, 0, 0.42) 100%);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75), inset 0 2px 7px rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    transform: translate3d(0px, 0px, 0);
+    will-change: transform;
+    transition: transform 120ms ease-out;
+}
+
+.mo-stick-knob--dragging {
+    transition: none;
+}
+
+.mo-stick-knob::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: repeating-radial-gradient(rgba(255, 255, 255, 0.14) 0, rgba(255, 255, 255, 0.14) 2px, transparent 3px, transparent 10px);
+    opacity: 0.32;
+}
+
+.mo-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.mo-readout {
+    margin-top: 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: rgba(226, 232, 240, 0.8);
+    opacity: 0.9;
+    white-space: nowrap;
+    width: 52ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 1.15em;
+}
+
+.mo-dpad-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.mo-dpad {
+    position: relative;
+    width: 144px;
+    height: 144px;
+}
+
+.mo-dpad-btn {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(226, 232, 240, 0.75);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform var(--anim-fast), background var(--anim-med), border-color var(--anim-med), box-shadow var(--anim-med), color var(--anim-med);
+    backdrop-filter: blur(10px);
+    user-select: none;
+    touch-action: manipulation;
+}
+
+.mo-dpad-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(226, 232, 240, 0.92);
+}
+
+.mo-dpad-btn:active {
+    transform: translate3d(0, 3px, 0) scale(0.985);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset, 0 10px 22px rgba(4, 6, 14, 0.55);
+}
+
+.mo-dpad-btn:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.mo-dpad-btn--active {
+    background: rgba(125, 157, 168, 0.16);
+    border-color: rgba(125, 157, 168, 0.35);
+    color: rgba(241, 245, 249, 0.98);
+    box-shadow: 0 0 0 1px rgba(125, 157, 168, 0.12) inset, 0 14px 34px rgba(8, 10, 18, 0.45);
+}
+
+.mo-dpad-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.32);
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mo-dpad-up {
+    top: 0;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    width: 42px;
+    height: 56px;
+}
+.mo-dpad-down {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    width: 42px;
+    height: 56px;
+}
+.mo-dpad-left {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    margin-block: auto;
+    width: 56px;
+    height: 42px;
+}
+.mo-dpad-right {
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin-block: auto;
+    width: 56px;
+    height: 42px;
+}
+
+@media (max-width: 820px) {
+    .mo-controls {
+        flex-direction: column;
+        gap: 2rem;
+    }
+}
+

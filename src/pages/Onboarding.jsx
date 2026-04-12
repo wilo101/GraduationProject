@@ -6,17 +6,17 @@ const Onboarding = ({ onComplete }) => {
 
     const screens = [
         {
-            title: "Welcome Home",
-            desc: "Your smart home monitors safety, comfort, and peace of mind.",
+            title: "Operations overview",
+            desc: "Monitor outdoor sites, safety zones, and robot activity across your organization.",
             icon: <div className="glass-panel" style={{ width: 80, height: 80, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🏠</div>
         },
         {
             title: "Monitor & Protect",
-            desc: "Live camera feeds and smart map tracking keep you aware of everything.",
+            desc: "Live field video and site maps keep your team aligned on coverage and incidents.",
             icon: <Camera size={48} color="var(--accent-blue)" />
         },
         {
-            title: "Smart Automation",
+            title: "Patrol & automation",
             desc: "Patrols and system checks happen automatically to keep you safe.",
             icon: <Shield size={48} color="var(--accent-success)" />
         },

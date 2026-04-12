@@ -1,118 +1,285 @@
-import React from 'react';
-import { Maximize2, Video, Activity, Mic } from 'lucide-react';
+import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { Maximize2, Minimize2, Video, Mic } from 'lucide-react'
 
-const CameraFeed = () => {
+function getFullscreenElement() {
+    return document.fullscreenElement ?? document.webkitFullscreenElement ?? null
+}
+
+/**
+ * @param {{ showChrome?: boolean; style?: React.CSSProperties; className?: string; onMicActiveChange?: (on: boolean) => void; onFullscreenChange?: (on: boolean) => void; cameraLabel?: string; cameraZone?: string }} props
+ */
+const CameraFeed = forwardRef(function CameraFeed(
+    { showChrome = true, style, className = '', onMicActiveChange, onFullscreenChange, cameraLabel = 'Perimeter cam 01', cameraZone = 'Live zone' },
+    ref
+) {
+    const rootRef = useRef(null)
+    const audioStreamRef = useRef(null)
+    const [micActive, setMicActive] = useState(false)
+    const [isFullscreen, setIsFullscreen] = useState(false)
+
+    const syncMic = useCallback(
+        (on) => {
+            setMicActive(on)
+            onMicActiveChange?.(on)
+        },
+        [onMicActiveChange]
+    )
+
+    const toggleMic = useCallback(async () => {
+        if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+            return
+        }
+        if (audioStreamRef.current) {
+            audioStreamRef.current.getTracks().forEach((t) => t.stop())
+            audioStreamRef.current = null
+            syncMic(false)
+            return
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            audioStreamRef.current = stream
+            syncMic(true)
+        } catch {
+            syncMic(false)
+        }
+    }, [syncMic])
+
+    const toggleFullscreen = useCallback(async () => {
+        const el = rootRef.current
+        if (!el) return
+        try {
+            const fsEl = getFullscreenElement()
+            if (fsEl === el) {
+                if (document.exitFullscreen) await document.exitFullscreen()
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen()
+            } else if (el.requestFullscreen) {
+                await el.requestFullscreen()
+            } else if (el.webkitRequestFullscreen) {
+                el.webkitRequestFullscreen()
+            }
+        } catch {
+            /* user gesture / policy */
+        }
+    }, [])
+
+    useImperativeHandle(
+        ref,
+        () => ({
+            toggleMic,
+            toggleFullscreen,
+        }),
+        [toggleMic, toggleFullscreen]
+    )
+
+    useEffect(() => {
+        return () => {
+            audioStreamRef.current?.getTracks().forEach((t) => t.stop())
+            audioStreamRef.current = null
+        }
+    }, [])
+
+    useEffect(() => {
+        const onFsChange = () => {
+            setIsFullscreen(getFullscreenElement() === rootRef.current)
+        }
+        document.addEventListener('fullscreenchange', onFsChange)
+        document.addEventListener('webkitfullscreenchange', onFsChange)
+        return () => {
+            document.removeEventListener('fullscreenchange', onFsChange)
+            document.removeEventListener('webkitfullscreenchange', onFsChange)
+        }
+    }, [])
+
+    useEffect(() => {
+        onFullscreenChange?.(isFullscreen)
+    }, [isFullscreen, onFullscreenChange])
+
+    const btnBase = {
+        width: 38,
+        height: 38,
+        borderRadius: '50%',
+        background: 'var(--camera-feed-btn-bg)',
+        border: '1px solid var(--camera-feed-btn-border)',
+        boxShadow: 'var(--camera-feed-btn-shadow)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--camera-feed-btn-color)',
+        cursor: 'pointer',
+        padding: 0,
+        transition:
+            'background 0.2s ease, border-color 0.2s ease, box-shadow var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+    }
+
     return (
-        <div className="glass-panel" style={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
-            minHeight: '320px',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#000'
-        }}>
-            {/* Simulated Video Feed Background */}
-            <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(45deg, #1a1a1a 0%, #2a2a2a 100%)',
-                opacity: 0.8
-            }}>
-                {/* Placeholder grid for video feel */}
-                <div style={{
-                    width: '100%', height: '100%',
-                    backgroundImage: 'radial-gradient(circle, #333 1px, transparent 1px)',
-                    backgroundSize: '20px 20px',
-                    opacity: 0.3
-                }} />
-            </div>
-
-            {/* Placeholder content if no video */}
-            <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', opacity: 0.5 }}>
-                <Video size={48} style={{ marginBottom: '1rem' }} />
-                <p style={{ fontFamily: 'var(--font-heading)' }}>Live Feed Offline</p>
-            </div>
-
-            {/* Overlays */}
-            <div style={{
-                position: 'absolute',
-                top: '1.5rem',
-                left: '1.5rem',
+        <div
+            ref={rootRef}
+            className={`deploy-camera-feed ${className}`.trim()}
+            style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                minHeight: 0,
+                overflow: 'hidden',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.75rem',
-                zIndex: 20
-            }}>
-                <div style={{
-                    padding: '0.4rem 0.8rem',
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    border: '1px solid rgba(239, 68, 68, 0.4)',
-                    borderRadius: 'var(--radius-pill)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    color: '#ef4444',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    backdropFilter: 'blur(4px)'
-                }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
-                    LIVE
-                </div>
-                <div style={{
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.8rem',
-                    background: 'rgba(0,0,0,0.4)',
-                    padding: '0.3rem 0.6rem',
-                    borderRadius: 'var(--radius-sm)',
-                    backdropFilter: 'blur(4px)'
-                }}>
-                    Living Room Cam 01
-                </div>
+                justifyContent: 'center',
+                background: 'var(--camera-feed-bg)',
+                transition: 'background var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                ...style,
+            }}
+        >
+            <div
+                style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'var(--camera-feed-overlay)',
+                    opacity: 1,
+                    transition: 'background var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                }}
+            >
+                <div
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundImage: 'var(--camera-feed-grid)',
+                        backgroundSize: 'var(--camera-feed-grid-size, 20px 20px, 24px 24px, 24px 24px, 12px 12px)',
+                        opacity: 'var(--camera-feed-grid-opacity, 0.52)',
+                        transition: 'opacity var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                    }}
+                />
             </div>
 
-            {/* Controls Overlay */}
-            <div style={{
-                position: 'absolute',
-                bottom: '1.5rem',
-                right: '1.5rem',
-                display: 'flex',
-                gap: '1rem',
-                zIndex: 20
-            }}>
-                <button style={{
-                    width: 40, height: 40,
-                    borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.1)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'white',
-                    backdropFilter: 'blur(4px)'
-                }}>
-                    <Mic size={18} />
-                </button>
-                <button style={{
-                    width: 40, height: 40,
-                    borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.1)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'white',
-                    backdropFilter: 'blur(4px)'
-                }}>
-                    <Maximize2 size={18} />
-                </button>
+                <div
+                    aria-hidden
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        zIndex: 2,
+                        pointerEvents: 'none',
+                        background: 'var(--camera-feed-vignette)',
+                        transition: 'background var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                    }}
+                />
+
+            <div
+                style={{
+                    position: 'relative',
+                    zIndex: 10,
+                    textAlign: 'center',
+                    color: 'var(--camera-feed-chrome-color)',
+                }}
+            >
+                <Video
+                    size={40}
+                    style={{
+                        marginBottom: '0.5rem',
+                        opacity: 'var(--camera-feed-chrome-icon-opacity, 0.55)',
+                        filter: 'var(--camera-feed-icon-filter, drop-shadow(0 1px 2px rgba(0,0,0,0.35)))',
+                        transition: 'filter var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                    }}
+                    aria-hidden
+                />
+                <p style={{ fontFamily: 'var(--font-heading)', fontSize: '0.85rem', margin: 0, fontWeight: 600, letterSpacing: '-0.02em' }}>{cameraLabel}</p>
+                <p style={{ fontSize: '0.72rem', margin: '0.25rem 0 0', color: 'var(--camera-feed-chrome-muted)' }}>{cameraZone}</p>
             </div>
 
-            {/* Decorative Corners */}
-            <div style={{ position: 'absolute', top: '1rem', right: '1rem', width: 20, height: 20, borderTop: '2px solid rgba(255,255,255,0.2)', borderRight: '2px solid rgba(255,255,255,0.2)', borderTopRightRadius: 8 }} />
-            <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', width: 20, height: 20, borderBottom: '2px solid rgba(255,255,255,0.2)', borderLeft: '2px solid rgba(255,255,255,0.2)', borderBottomLeftRadius: 8 }} />
+            {showChrome ? (
+                <>
+                    <div
+                        style={{
+                            position: 'absolute',
+                            top: '1rem',
+                            left: '1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.65rem',
+                            zIndex: 20,
+                        }}
+                    >
+                        <div
+                            style={{
+                                padding: '0.25rem 0.55rem',
+                                background: 'var(--camera-feed-live-bg)',
+                                border: '1px solid var(--camera-feed-live-border)',
+                                borderRadius: 6,
+                                boxShadow: 'var(--camera-feed-live-shadow)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                color: 'var(--camera-feed-live-fg)',
+                                fontSize: '0.65rem',
+                                fontWeight: 800,
+                                letterSpacing: '0.1em',
+                                transition: 'box-shadow var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                            }}
+                        >
+                            <span
+                                style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: '50%',
+                                    background: 'var(--camera-feed-live-dot)',
+                                    boxShadow: '0 0 6px color-mix(in srgb, var(--camera-feed-live-dot) 55%, transparent)',
+                                }}
+                                aria-hidden
+                            />
+                            LIVE
+                        </div>
+                        <span
+                            style={{
+                                color: 'var(--camera-feed-label-color)',
+                                fontSize: '0.78rem',
+                                padding: '0.2rem 0.5rem',
+                                border: '1px solid var(--camera-feed-label-border)',
+                                borderRadius: 6,
+                                background: 'var(--camera-feed-label-bg)',
+                                boxShadow: 'var(--camera-feed-label-shadow)',
+                                transition: 'box-shadow var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                            }}
+                        >
+                            {cameraLabel}
+                        </span>
+                    </div>
 
+                    <div
+                        style={{
+                            position: 'absolute',
+                            bottom: '1rem',
+                            right: '1rem',
+                            display: 'flex',
+                            gap: '0.5rem',
+                            zIndex: 20,
+                        }}
+                    >
+                        <button
+                            type="button"
+                            style={{
+                                ...btnBase,
+                                borderColor: micActive ? 'var(--camera-feed-mic-active-border)' : 'var(--camera-feed-btn-border)',
+                                background: micActive ? 'var(--camera-feed-mic-active-bg)' : 'var(--camera-feed-btn-bg)',
+                            }}
+                            aria-label={micActive ? 'Mute microphone' : 'Unmute microphone'}
+                            aria-pressed={micActive}
+                            title={micActive ? 'Turn off microphone' : 'Two-way audio (microphone)'}
+                            onClick={() => void toggleMic()}
+                        >
+                            <Mic size={16} aria-hidden />
+                        </button>
+                        <button
+                            type="button"
+                            style={btnBase}
+                            aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                            onClick={() => void toggleFullscreen()}
+                        >
+                            {isFullscreen ? <Minimize2 size={16} aria-hidden /> : <Maximize2 size={16} aria-hidden />}
+                        </button>
+                    </div>
+                </>
+            ) : null}
         </div>
-    );
-};
+    )
+})
 
-export default CameraFeed;
+export default memo(CameraFeed)

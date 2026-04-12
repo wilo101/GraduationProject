@@ -45,10 +45,10 @@ const DeviceCard = ({ icon: Icon, label, subLabel, isOn, onToggle, activeColor =
             </div>
 
             <div>
-                <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ops-metric-emphasis)', marginBottom: '0.25rem' }}>
                     {label}
                 </h4>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--ops-metric-caption)' }}>
                     {subLabel || (isOn ? 'On' : 'Off')}
                 </p>
             </div>

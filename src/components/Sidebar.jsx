@@ -1,114 +1,132 @@
-import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
-import { Home, Settings, Map, Rocket, User } from 'lucide-react';
-import logo from '../assets/afr-logo.png';
+import React, { useEffect, useMemo, useState } from 'react'
+import { NavLink } from 'react-router-dom'
+import { Home, Settings, Map, Zap, Shield } from 'lucide-react'
+import logo from '../assets/afr-logo.png'
 
-const Sidebar = () => {
-    // Icons matching the reference style
-    const navItems = [
-        { icon: Home, label: 'Home', path: '/' },
-        { icon: Map, label: 'Map', path: '/map-view' },
-        { icon: Rocket, label: 'Deploy', path: '/deploy' },
-        { icon: User, label: 'Account', path: '/account' },
-        { icon: Settings, label: 'Settings', path: '/settings' },
-    ];
+const ICON_STROKE = 1.65
+const ICON_SIZE = 22
+
+const navItems = [
+    { icon: Home, label: 'Overview', path: '/' },
+    { icon: Map, label: 'Map', path: '/map-view' },
+    { icon: Zap, label: 'Deploy', path: '/deploy' },
+    { icon: Shield, label: 'Diagnostics', path: '/diagnostics' },
+    { icon: Settings, label: 'Settings', path: '/settings' },
+]
+
+export default function Sidebar() {
+    const [estopOpen, setEstopOpen] = useState(false)
+    const [lastEStopAt, setLastEStopAt] = useState(null)
+
+    const estopLabel = useMemo(() => 'Emergency Stop', [])
+
+    useEffect(() => {
+        const onKeyDown = (e) => {
+            if (e.key === 'Escape') setEstopOpen(false)
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [])
+
+    const executeEStop = () => {
+        // Placeholder: later wire to ROS / WebSocket / API.
+        const now = new Date()
+        setLastEStopAt(now)
+        window.dispatchEvent(new CustomEvent('robot:estop', { detail: { at: now.toISOString() } }))
+        setEstopOpen(false)
+    }
 
     return (
-        <aside style={{
-            position: 'fixed',
-            left: '20px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 100,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start', // Align to left so expansion goes right
-            gap: '0.75rem',
-            padding: '1rem 0.75rem',
-            background: 'var(--glass-base)',
-            backdropFilter: 'blur(var(--glass-blur))',
-            border: '1px solid var(--glass-border)',
-            borderRadius: 'var(--radius-xl)', // Slightly less rounded to accommodate lists? No, keep it rounded.
-            boxShadow: 'var(--shadow-soft)',
-            transition: 'width 0.3s ease'
-        }}>
-
-            {/* Top Indicator / Logo */}
-            <div style={{
-                width: 40, height: 40,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: '0.5rem',
-                alignSelf: 'center',
-                overflow: 'hidden'
-            }}>
-                <img src={logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <aside className="sidebar-dock" aria-label="Main navigation">
+            <div className="sidebar-dock__mark">
+                <img src={logo} alt="Augustus OS" width={44} height={44} />
             </div>
 
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+            <div className="sidebar-dock__rule" aria-hidden />
+
+            <nav className="sidebar-dock__nav" aria-label="Primary">
                 {navItems.map((item) => (
                     <NavLink
                         key={item.path}
                         to={item.path}
-                        className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
-                        style={({ isActive }) => ({
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-start',
-                            color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                            textDecoration: 'none',
-                            transition: 'all 0.3s ease',
-                            opacity: isActive ? 1 : 0.7,
-                            padding: '0.6rem',
-                            borderRadius: '99px',
-                            background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
-                            overflow: 'hidden',
-                            width: 'fit-content' // Allow expansion
-                        })}
+                        end={item.path === '/'}
+                        className={({ isActive }) =>
+                            `sidebar-nav__link${isActive ? ' sidebar-nav__link--active' : ''}`
+                        }
+                        aria-label={item.label}
+                        data-tour={
+                            item.path === '/map-view'
+                                ? 'nav-map'
+                                : item.path === '/diagnostics'
+                                  ? 'nav-diagnostics'
+                                  : undefined
+                        }
                     >
-                        <div style={{ minWidth: 24, display: 'flex', justifyContent: 'center' }}>
-                            <item.icon size={24} strokeWidth={1.5} />
-                        </div>
-
-                        {/* Label - Expands on hover via CSS in style tag or inline hover detection if needed, but CSS is cleaner. 
-                            However, since we are using inline styles for logic, let's add a class and simple toggle or just use a group hover approach.
-                            Actually, simpler to just use a small separate style block or inline hover state using JS if we want to be pure in one file without external CSS. 
-                            Let's use the 'group' concept by detecting hover on the link itself in js? No, let's use a module-like approach with inner style.
-                        */}
-                        <span className="nav-label" style={{
-                            marginLeft: '0.75rem',
-                            fontSize: '0.9rem',
-                            fontWeight: 500,
-                            whiteSpace: 'nowrap',
-                            opacity: 0,
-                            maxWidth: 0,
-                            transition: 'all 0.3s ease',
-                            display: 'inline-block'
-                        }}>
-                            {item.label}
+                        <span className="sidebar-nav__icon" aria-hidden>
+                            <item.icon size={ICON_SIZE} strokeWidth={ICON_STROKE} />
                         </span>
+                        <span className="sidebar-nav__tip">{item.label}</span>
                     </NavLink>
                 ))}
             </nav>
 
-            {/* Bottom Decoration */}
-            <div style={{ marginTop: '1rem', width: 20, height: 1, background: 'rgba(255,255,255,0.1)', alignSelf: 'center' }} />
+            {/* E-Stop pinned bottom (does not change nav layout) */}
+            <div className="sidebar-dock__estop">
+                <button
+                    type="button"
+                    className="sidebar-nav__link sidebar-nav__link--estop"
+                    onClick={() => setEstopOpen(true)}
+                    aria-label={estopLabel}
+                    data-tour="estop-btn"
+                >
+                    <span className="sidebar-nav__icon" aria-hidden>
+                        <span className="sidebar-estop__glyph">⏹</span>
+                    </span>
+                    <span className="sidebar-nav__tip">{estopLabel}</span>
+                </button>
+                {lastEStopAt ? (
+                    <div className="sidebar-estop__meta" aria-hidden>
+                        {lastEStopAt.toLocaleTimeString()}
+                    </div>
+                ) : null}
+            </div>
 
-            <style>{`
-                .nav-item:hover {
-                    background: rgba(255,255,255,0.15) !important;
-                    opacity: 1 !important;
-                    padding-right: 1.2rem !important;
-                }
-                .nav-item:hover .nav-label {
-                    opacity: 1 !important;
-                    max-width: 100px !important;
-                }
-            `}</style>
+            <div className="sidebar-dock__foot" aria-hidden>
+                <div className="sidebar-dock__foot-line" />
+                <div className="sidebar-dock__foot-dot" />
+            </div>
 
+            {estopOpen ? (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Confirm emergency stop"
+                    className="sidebar-estop__modal-backdrop"
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget) setEstopOpen(false)
+                    }}
+                >
+                    <div className="sidebar-estop__modal glass-panel">
+                        <div className="sidebar-estop__modal-title">
+                            <span className="sidebar-estop__modal-icon" aria-hidden>
+                                ⏹
+                            </span>
+                            Confirm Emergency Stop
+                        </div>
+                        <div className="sidebar-estop__modal-sub">
+                            This will immediately stop robot movement. Continue?
+                        </div>
+                        <div className="sidebar-estop__modal-actions">
+                            <button type="button" className="auth-social-btn" onClick={() => setEstopOpen(false)}>
+                                Cancel
+                            </button>
+                            <button type="button" className="sidebar-estop__confirm" onClick={executeEStop}>
+                                Stop now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </aside>
-    );
-};
-
-export default Sidebar;
+    )
+}

@@ -1,0 +1,150 @@
+/* Shared ops surfaces + header (Dashboard, Settings) — matches diag/map frames */
+
+.dashboard-page.ops-page-wrap {
+    max-width: var(--ops-content-max);
+    margin: 0;
+    padding: 0 0 var(--shell-bottom-safe);
+    display: flex;
+    flex-direction: column;
+    gap: var(--shell-gap);
+    flex: 1;
+    min-height: 0;
+}
+
+/* Settings — matches System Diagnostics: diag-ops-frame + diag-card (see Settings.jsx) */
+.settings-ops-card {
+    width: 100%;
+    max-width: none;
+}
+
+.settings-ops-card .account-settings-panel {
+    max-width: none;
+    margin: 0;
+    width: 100%;
+}
+
+.ops-surface-frame {
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-lg);
+    padding: var(--shell-frame-pad);
+    background:
+        radial-gradient(ellipse 80% 55% at 50% 0%, rgba(125, 157, 168, 0.07) 0%, transparent 55%),
+        linear-gradient(180deg, rgba(22, 22, 24, 0.55) 0%, rgba(15, 15, 15, 0.98) 42%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.ops-surface-frame__accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(125, 157, 168, 0.42) 24%,
+        rgba(241, 245, 249, 0.3) 50%,
+        rgba(125, 157, 168, 0.42) 76%,
+        transparent 100%
+    );
+    opacity: 0.88;
+    pointer-events: none;
+}
+
+.ops-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.65rem 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+.ops-page-header__title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.35rem 0;
+}
+
+.ops-page-header__kicker {
+    font-size: 0.88rem;
+    color: var(--ops-metric-caption);
+    margin: 0 0 0.5rem 0;
+    font-family: var(--font-mono);
+}
+
+.ops-page-header__desc {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 48ch;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.dashboard-page .ops-surface-frame {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-frame__inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--shell-gap);
+    flex: 1;
+    min-height: 0;
+}
+
+.dashboard-frame__grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--shell-gap);
+    flex-shrink: 0;
+}
+
+.dashboard-frame__map {
+    flex: 1;
+    min-height: clamp(200px, 28vh, 420px);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-frame__map .house-map {
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-frame__camera {
+    grid-column: span 7;
+    min-height: 340px;
+}
+
+.dashboard-frame__cards {
+    grid-column: span 5;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-frame__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-frame__camera,
+    .dashboard-frame__cards {
+        grid-column: span 1;
+    }
+}
+
+.account-settings-panel {
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}

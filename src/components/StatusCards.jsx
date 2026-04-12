@@ -4,7 +4,7 @@ import { Zap, Droplets, Gauge, Thermometer, Activity } from 'lucide-react';
 const DataNode = ({ title, unit, icon: Icon, defaultVal, maxVal, threshold, thresholdLabel, color, isReverseThreshold = false, index }) => {
     const [value, setValue] = useState(defaultVal);
     const isCritical = isReverseThreshold ? value < threshold : value > threshold;
-    const statusColor = isCritical ? 'var(--status-critical)' : 'var(--text-primary)';
+    const statusColor = isCritical ? 'var(--status-critical)' : 'var(--ops-metric-emphasis)';
     const percent = (value / maxVal) * 100;
 
     return (
@@ -35,18 +35,18 @@ const DataNode = ({ title, unit, icon: Icon, defaultVal, maxVal, threshold, thre
                     <div style={{
                         padding: '8px', borderRadius: '8px',
                         background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
-                        color: isCritical ? statusColor : 'var(--text-secondary)'
+                        color: isCritical ? statusColor : 'var(--ops-metric-caption)'
                     }}>
                         <Icon size={18} />
                     </div>
                     <div>
                         <span style={{
                             fontFamily: 'var(--font-ui)', fontSize: '0.75rem', fontWeight: 600,
-                            color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em'
+                            color: 'var(--ops-metric-emphasis)', textTransform: 'uppercase', letterSpacing: '0.05em'
                         }}>
                             {title}
                         </span>
-                        <div style={{ fontSize: '0.7rem', color: isCritical ? statusColor : 'var(--text-tertiary)' }}>
+                        <div style={{ fontSize: '0.7rem', color: isCritical ? statusColor : 'var(--ops-metric-caption)' }}>
                             {thresholdLabel}
                         </div>
                     </div>
@@ -58,12 +58,12 @@ const DataNode = ({ title, unit, icon: Icon, defaultVal, maxVal, threshold, thre
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
                     <span style={{
                         fontFamily: 'var(--font-mono)', fontSize: '2.5rem', fontWeight: 500,
-                        color: isCritical ? statusColor : 'var(--text-primary)',
+                        color: isCritical ? statusColor : 'var(--ops-metric-emphasis)',
                         letterSpacing: '-0.05em'
                     }}>
                         {value}
                     </span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: 'var(--text-tertiary)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: 'var(--ops-metric-unit)' }}>
                         {unit}
                     </span>
                 </div>
@@ -77,7 +77,7 @@ const DataNode = ({ title, unit, icon: Icon, defaultVal, maxVal, threshold, thre
                 }}>
                     <div style={{
                         height: '100%', width: `${percent}%`,
-                        background: isCritical ? statusColor : 'var(--text-primary)',
+                        background: isCritical ? statusColor : 'var(--ops-metric-emphasis)',
                         transition: 'width 0.5s var(--ease-premium)',
                         borderRadius: '99px'
                     }} />

@@ -35,13 +35,21 @@ const ClimateDial = () => {
                     <div style={{ padding: 8, background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }}>
                         <Fan size={20} className={isCooling ? 'animate-spin-slow' : ''} color={color} />
                     </div>
-                    <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                        LIVING ROOM AC
+                    <span style={{ fontSize: '0.9rem', color: 'var(--ops-metric-emphasis)', fontWeight: 600 }}>
+                        SITE CLIMATE (SHELTER)
                     </span>
                 </div>
 
-                <h3 style={{ fontSize: '3rem', fontWeight: 300, display: 'flex' }}>
-                    {temp}<span style={{ fontSize: '1.5rem', marginTop: '0.5rem' }}>°c</span>
+                <h3
+                    style={{
+                        fontSize: '3rem',
+                        fontWeight: 300,
+                        display: 'flex',
+                        color: 'var(--ops-metric-emphasis)',
+                    }}
+                >
+                    {temp}
+                    <span style={{ fontSize: '1.5rem', marginTop: '0.5rem', color: 'var(--ops-metric-unit)' }}>°c</span>
                 </h3>
                 <p style={{ color: color, fontSize: '0.9rem', marginTop: '0.25rem' }}>
                     {isCooling ? 'Cooling to match' : 'Heating up'}
@@ -107,8 +115,10 @@ const ClimateDial = () => {
                     position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
                     textAlign: 'center'
                 }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>CURRENT</span>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 600 }}>24°</div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--ops-metric-caption)', letterSpacing: '0.06em' }}>
+                        CURRENT
+                    </span>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--ops-metric-emphasis)' }}>24°</div>
                 </div>
             </div>
         </div>

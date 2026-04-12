@@ -1,105 +1,348 @@
-import React from 'react';
-import { MapPin, Navigation } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { Flame, Wind } from 'lucide-react'
 
-const HouseMap = () => {
-    // Hardcoded rooms layout
-    const rooms = [
-        { id: 'living', name: 'Living Room', x: 10, y: 10, w: 50, h: 60, color: 'rgba(96, 165, 250, 0.1)' },
-        { id: 'kitchen', name: 'Kitchen', x: 65, y: 10, w: 30, h: 35, color: 'rgba(212, 175, 55, 0.1)' },
-        { id: 'hall', name: 'Hallway', x: 65, y: 50, w: 15, h: 40, color: 'rgba(255, 255, 255, 0.05)' },
-        { id: 'bed', name: 'Bedroom', x: 10, y: 75, w: 40, h: 20, color: 'rgba(16, 185, 129, 0.1)' },
-    ];
+const LAYOUT = [
+    { id: 'yard', name: 'MAIN YARD', x: 10, y: 10, w: 50, h: 60 },
+    { id: 'loading', name: 'LOADING DOCK', x: 65, y: 10, w: 30, h: 35 },
+    { id: 'access', name: 'ACCESS ROAD', x: 65, y: 50, w: 15, h: 40 },
+    { id: 'storage', name: 'STORAGE YARD', x: 10, y: 75, w: 40, h: 20 },
+]
 
-    const robotPos = { x: 35, y: 40, rot: 45 }; // Relative to map container %
+function findRoomAt(rooms, x, y) {
+    return rooms.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h)
+}
+
+function zoneCenter(room) {
+    return { x: room.x + room.w / 2, y: room.y + room.h / 2 }
+}
+
+function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3)
+}
+
+/** Demo wind: direction in degrees from north (clockwise), speed km/h */
+const defaultWind = { degFromNorth: 38, speedKmh: 14 }
+
+const HouseMap = ({
+    layers = { grid: true, labels: true, robot: true, sensors: false, wind: true, pathHistory: true },
+    selectedRoomId,
+    flashZoneId = null,
+    /** Active map command from operator (deploy / navigate / scan) */
+    mapMission = null,
+    onMapMissionComplete,
+    onTelemetry,
+    batteryPercent = 78,
+    wind = defaultWind,
+}) => {
+    const rooms = LAYOUT
+    const [trail, setTrail] = useState([{ x: 35, y: 40 }])
+    const [robotRot, setRobotRot] = useState(45)
+    const [scanningZoneId, setScanningZoneId] = useState(null)
+
+    const tRef = useRef(0)
+    const trailRef = useRef(trail)
+    const pauseDriftRef = useRef(false)
+    const lastTelemetry = useRef({ robotZoneId: null, isMoving: false })
+    const moveRafRef = useRef(0)
+    const movePrevRef = useRef({ x: 35, y: 40 })
+
+    useEffect(() => {
+        trailRef.current = trail
+    }, [trail])
+
+    const hazardMarkers = useMemo(
+        () => [
+            { id: 'heat-loading', zoneId: 'loading', icon: Flame, label: 'Equipment heat', level: 'critical' },
+            { id: 'dust-yard', zoneId: 'yard', icon: Wind, label: 'Dust / air alert', level: 'warning' },
+        ],
+        []
+    )
+
+    const roomById = useMemo(() => Object.fromEntries(rooms.map((r) => [r.id, r])), [rooms])
+
+    /** Idle drift — paused during deploy / navigate / scan */
+    useEffect(() => {
+        const step = () => {
+            if (!pauseDriftRef.current) {
+                setTrail((cur) => {
+                    const last = cur[cur.length - 1] || { x: 35, y: 40 }
+                    const nx = Math.max(6, Math.min(94, last.x + (Math.random() - 0.5) * 2.2))
+                    const ny = Math.max(6, Math.min(94, last.y + (Math.random() - 0.5) * 2.2))
+                    const next = [...cur, { x: nx, y: ny }]
+                    return next.length > 48 ? next.slice(next.length - 48) : next
+                })
+            }
+            tRef.current = window.setTimeout(step, 900)
+        }
+        step()
+        return () => window.clearTimeout(tRef.current)
+    }, [])
+
+    /** Move robot to sector (deploy = slower path) */
+    useEffect(() => {
+        if (!mapMission || mapMission.action === 'scan') return undefined
+
+        const room = roomById[mapMission.zoneId]
+        if (!room) {
+            onMapMissionComplete?.({ ...mapMission, ok: false })
+            return undefined
+        }
+
+        pauseDriftRef.current = true
+        if (moveRafRef.current) cancelAnimationFrame(moveRafRef.current)
+
+        const target = zoneCenter(room)
+        const start = { ...(trailRef.current[trailRef.current.length - 1] || { x: 35, y: 40 }) }
+        movePrevRef.current = { ...start }
+        const duration = mapMission.action === 'deploy' ? 3200 : 2200
+        const t0 = performance.now()
+
+        const tick = (now) => {
+            const elapsed = now - t0
+            const u = Math.min(1, elapsed / duration)
+            const e = easeOutCubic(u)
+            const x = start.x + (target.x - start.x) * e
+            const y = start.y + (target.y - start.y) * e
+
+            const prev = movePrevRef.current
+            const dx = x - prev.x
+            const dy = y - prev.y
+            if (Math.hypot(dx, dy) > 0.015) {
+                setRobotRot((Math.atan2(dx, -dy) * 180) / Math.PI)
+            }
+            movePrevRef.current = { x, y }
+
+            setTrail((cur) => {
+                const next = [...cur, { x, y }]
+                return next.length > 96 ? next.slice(-96) : next
+            })
+
+            if (u < 1) {
+                moveRafRef.current = requestAnimationFrame(tick)
+            } else {
+                moveRafRef.current = 0
+                pauseDriftRef.current = false
+                onMapMissionComplete?.({ ...mapMission, ok: true })
+            }
+        }
+
+        moveRafRef.current = requestAnimationFrame(tick)
+
+        return () => {
+            if (moveRafRef.current) cancelAnimationFrame(moveRafRef.current)
+            moveRafRef.current = 0
+            pauseDriftRef.current = false
+        }
+    }, [mapMission, roomById, onMapMissionComplete])
+
+    /** Sector scan — visual sweep on zone */
+    useEffect(() => {
+        if (!mapMission || mapMission.action !== 'scan') return undefined
+
+        const room = roomById[mapMission.zoneId]
+        if (!room) {
+            onMapMissionComplete?.({ ...mapMission, ok: false })
+            return undefined
+        }
+
+        pauseDriftRef.current = true
+        setScanningZoneId(mapMission.zoneId)
+        const id = window.setTimeout(() => {
+            setScanningZoneId(null)
+            pauseDriftRef.current = false
+            onMapMissionComplete?.({ ...mapMission, ok: true })
+        }, 2600)
+
+        return () => {
+            window.clearTimeout(id)
+            setScanningZoneId(null)
+            pauseDriftRef.current = false
+        }
+    }, [mapMission, roomById, onMapMissionComplete])
+
+    const emitTelemetry = useCallback(() => {
+        if (!onTelemetry) return
+        const pt = trail[trail.length - 1] || { x: 35, y: 40 }
+        const room = findRoomAt(rooms, pt.x, pt.y)
+        const robotZoneId = room?.id ?? 'yard'
+        let isMoving = false
+        if (trail.length >= 2) {
+            const a = trail[trail.length - 1]
+            const b = trail[trail.length - 2]
+            isMoving = Math.hypot(a.x - b.x, a.y - b.y) > 0.08
+        }
+        if (pauseDriftRef.current && mapMission && mapMission.action !== 'scan') isMoving = true
+        if (lastTelemetry.current.robotZoneId === robotZoneId && lastTelemetry.current.isMoving === isMoving) return
+        lastTelemetry.current = { robotZoneId, isMoving }
+        onTelemetry({ robotZoneId, isMoving })
+    }, [onTelemetry, trail, rooms, mapMission])
+
+    useEffect(() => {
+        emitTelemetry()
+    }, [emitTelemetry])
+
+    const lastPt = trail[trail.length - 1] || { x: 35, y: 40 }
+
+    const windDeg = wind.degFromNorth ?? 0
 
     return (
-        <div className="glass-panel" style={{
-            width: '100%',
-            height: '400px',
-            position: 'relative',
-            overflow: 'hidden',
-            padding: '1.5rem'
-        }}>
-            <div style={{ position: 'absolute', top: '1.5rem', left: '1.5rem', zIndex: 10 }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>House Map</h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                    <MapPin size={14} color="var(--status-blue)" />
-                    Robot in: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Living Room</span>
-                </div>
-            </div>
+        <div className="house-map">
+            {layers?.grid ? <div className="house-map__layer house-map__grid" aria-hidden /> : null}
 
-            {/* Map Container */}
-            <div style={{
-                width: '100%', height: '100%',
-                position: 'relative',
-                marginTop: '1rem'
-            }}>
-                {/* Grid Lines Background */}
-                <div style={{
-                    position: 'absolute', inset: 0,
-                    backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-                    backgroundSize: '40px 40px',
-                    opacity: 0.5
-                }} />
-
-                {/* Rooms */}
-                {rooms.map(room => (
-                    <div key={room.id} style={{
-                        position: 'absolute',
-                        left: `${room.x}%`, top: `${room.y}%`,
-                        width: `${room.w}%`, height: `${room.h}%`,
-                        background: room.color,
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: 'rgba(255,255,255,0.3)',
-                        fontWeight: 600,
-                        fontSize: '0.8rem',
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase'
-                    }}>
-                        {room.name}
+            {layers?.wind ? (
+                <>
+                    <svg
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                        className="house-map__layer house-map__wind-streams"
+                        style={{ zIndex: 6, pointerEvents: 'none' }}
+                        aria-hidden
+                    >
+                        <g transform={`rotate(${windDeg} 50 50)`} opacity="0.55">
+                            {[10, 24, 38, 52, 66, 80, 94].map((y, i) => (
+                                <line
+                                    key={i}
+                                    x1="-18"
+                                    y1={y}
+                                    x2="118"
+                                    y2={y}
+                                    stroke="rgba(125, 157, 168, 0.1)"
+                                    strokeWidth="0.14"
+                                    strokeLinecap="round"
+                                />
+                            ))}
+                        </g>
+                    </svg>
+                    <div className="house-map__wind-hud" role="img" aria-label={`Wind downwind ${windDeg} degrees`}>
+                        <svg width="44" height="44" viewBox="0 0 44 44" className="house-map__wind-hud-svg">
+                            <circle cx="22" cy="22" r="19" className="house-map__wind-hud-ring" />
+                            <text x="22" y="9" textAnchor="middle" className="house-map__wind-hud-n">
+                                N
+                            </text>
+                            <g transform={`rotate(${windDeg} 22 22)`}>
+                                <line
+                                    className="house-map__wind-hud-needle"
+                                    x1="22"
+                                    y1="22"
+                                    x2="22"
+                                    y2="9"
+                                    stroke="rgba(125, 157, 168, 0.75)"
+                                    strokeWidth="1.2"
+                                    strokeLinecap="round"
+                                />
+                                <path className="house-map__wind-hud-arrow" d="M22 6 L26 13 L22 11 L18 13 Z" fill="rgba(241, 245, 249, 0.88)" />
+                            </g>
+                            <circle
+                                className="house-map__wind-hud-hub"
+                                cx="22"
+                                cy="22"
+                                r="2.2"
+                                fill="rgba(15, 15, 18, 0.95)"
+                                stroke="rgba(255,255,255,0.12)"
+                                strokeWidth="0.4"
+                            />
+                        </svg>
+                        <div className="house-map__wind-hud-meta">
+                            <span className="house-map__wind-hud-deg">{windDeg}°</span>
+                            <span className="house-map__wind-hud-spd">{wind?.speedKmh ?? defaultWind.speedKmh} km/h</span>
+                        </div>
                     </div>
-                ))}
+                </>
+            ) : null}
 
-                {/* Robot Marker */}
-                <div style={{
-                    position: 'absolute',
-                    left: `${robotPos.x}%`, top: `${robotPos.y}%`,
-                    width: 32, height: 32,
-                    marginLeft: -16, marginTop: -16, // Center anchor
-                    zIndex: 20
-                }}>
-                    {/* Pulse */}
-                    <div style={{
-                        position: 'absolute', inset: -8,
-                        border: '1px solid var(--status-blue)',
-                        borderRadius: '50%',
-                        opacity: 0,
-                        animation: 'radarPulse 2s infinite'
-                    }} />
+            {rooms.map((room) => {
+                const selected = room.id === selectedRoomId
+                const flash = flashZoneId && room.id === flashZoneId
+                const scanning = scanningZoneId === room.id
+                return (
+                    <div
+                        key={room.id}
+                        className={`house-map__room${selected ? ' house-map__room--selected' : ''}${flash ? ' house-map__room--flash' : ''}${scanning ? ' house-map__room--scanning' : ''}`}
+                        style={{
+                            left: `${room.x}%`,
+                            top: `${room.y}%`,
+                            width: `${room.w}%`,
+                            height: `${room.h}%`,
+                            background: `var(--map-room-${room.id})`,
+                            cursor: 'default',
+                        }}
+                    >
+                        <span className={`house-map__room-label${layers?.labels ? '' : ' house-map__room-label--hidden'}`}>{room.name}</span>
+                        {scanning ? (
+                            <div className="house-map__scan-overlay" aria-hidden>
+                                <div className="house-map__scan-sweep" />
+                                <span className="house-map__scan-label">Scanning…</span>
+                            </div>
+                        ) : null}
+                    </div>
+                )
+            })}
 
-                    {/* Icon */}
-                    <div style={{
-                        width: '100%', height: '100%',
-                        background: 'var(--status-blue)',
-                        borderRadius: '50%',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transform: `rotate(${robotPos.rot}deg)`,
-                        boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)'
-                    }}>
-                        <Navigation size={18} color="white" fill="white" />
+            {layers?.robot ? (
+                <svg
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                    className="house-map__layer"
+                    style={{ zIndex: 11, pointerEvents: 'none' }}
+                    aria-hidden
+                >
+                    {layers?.pathHistory && trail.length > 2 ? (
+                        <path
+                            d={`M ${trail.map((p) => `${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' L ')}`}
+                            fill="none"
+                            stroke="rgba(125, 157, 168, 0.45)"
+                            strokeWidth="0.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            opacity="0.72"
+                        />
+                    ) : null}
+                </svg>
+            ) : null}
+
+            {layers?.sensors
+                ? hazardMarkers.map((m) => {
+                      const room = roomById[m.zoneId]
+                      if (!room) return null
+                      const x = room.x + room.w - 6
+                      const y = room.y + 6
+                      const Icon = m.icon
+                      const isCritical = m.level === 'critical'
+                      return (
+                          <div
+                              key={m.id}
+                              title={m.label}
+                              className="house-map__sensor"
+                              style={{
+                                  left: `${x}%`,
+                                  top: `${y}%`,
+                                  background: isCritical ? 'rgba(239, 68, 68, 0.15)' : 'rgba(212, 160, 23, 0.14)',
+                                  borderColor: isCritical ? 'rgba(239, 68, 68, 0.4)' : 'rgba(212, 160, 23, 0.35)',
+                                  color: isCritical ? 'rgba(254, 202, 202, 0.95)' : 'rgba(252, 211, 77, 0.95)',
+                              }}
+                          >
+                              <Icon size={14} aria-hidden />
+                          </div>
+                      )
+                  })
+                : null}
+
+            {layers?.robot ? (
+                <div
+                    className="house-map__robot"
+                    style={{
+                        left: `${lastPt.x}%`,
+                        top: `${lastPt.y}%`,
+                    }}
+                    aria-label="Robot position"
+                >
+                    <div className="house-map__robot-marker" style={{ transform: `rotate(${robotRot}deg)` }} aria-hidden>
+                        <span className="house-map__robot-chevron" />
                     </div>
                 </div>
-            </div>
-
-            <style>{`
-                @keyframes radarPulse {
-                    0% { transform: scale(0.8); opacity: 0.8; }
-                    100% { transform: scale(2); opacity: 0; }
-                }
-            `}</style>
+            ) : null}
         </div>
-    );
-};
+    )
+}
 
-export default HouseMap;
+export default HouseMap

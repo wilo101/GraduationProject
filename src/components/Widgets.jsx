@@ -8,16 +8,20 @@ export const GreetingWidget = ({ name = "Alex" }) => {
     return (
         <div style={{ padding: '0 0 2rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div className="fade-in">
-                <h1 style={{
-                    fontSize: '3rem', fontWeight: 600,
-                    background: 'linear-gradient(to right, #fff, rgba(255,255,255,0.7))',
-                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                    letterSpacing: '-1px'
-                }}>
-                    {greeting}, {name}
+                <h1
+                    dir="auto"
+                    className="mixed-bidi"
+                    style={{
+                        fontSize: '3rem', fontWeight: 600,
+                        background: 'linear-gradient(to right, var(--text-primary), var(--text-secondary))',
+                        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                        letterSpacing: '-1px'
+                    }}
+                >
+                    {greeting}, <bdi>{name}</bdi>
                 </h1>
                 <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                    Home is current in <strong>Night Mode</strong>. All systems secure.
+                    Facility profile: <strong>Night operations</strong>. Perimeter and patrol nominal.
                 </p>
             </div>
 
@@ -27,8 +31,8 @@ export const GreetingWidget = ({ name = "Alex" }) => {
             }}>
                 <Cloud size={24} color="var(--accent-blue)" fill="rgba(96, 165, 250, 0.2)" />
                 <div>
-                    <span style={{ fontSize: '1.2rem', fontWeight: 600 }}>18°</span>
-                    <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>Cloudy</span>
+                    <span style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--ops-metric-emphasis)' }}>18°</span>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--ops-metric-caption)', marginInlineStart: '0.5rem' }}>Cloudy</span>
                 </div>
             </div>
         </div>
@@ -58,7 +62,7 @@ export const MusicWidget = () => {
                     fontSize: '0.75rem', color: 'var(--accent-gold)', marginBottom: '0.25rem', fontWeight: 600, letterSpacing: '0.05em'
                 }}>
                     <div className="animate-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor' }} />
-                    PLAYING ON HOME POD
+                    FIELD COMMS CHANNEL
                 </div>
                 <h4 style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>Midnight City</h4>
                 <p style={{ color: 'var(--text-secondary)' }}>M83 • Hurry Up, We're Dreaming</p>
@@ -70,7 +74,7 @@ export const MusicWidget = () => {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     boxShadow: '0 0 20px rgba(255,255,255,0.2)'
                 }}>
-                    <Play size={24} fill="black" style={{ marginLeft: 4 }} />
+                    <Play size={24} fill="black" style={{ marginInlineStart: 4 }} />
                 </button>
             </div>
         </div>

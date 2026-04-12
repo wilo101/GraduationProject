@@ -1,0 +1,269 @@
+/* Splash — same visual language as auth: neutral depth, glass, motion */
+
+.splash-screen {
+    --splash-photo: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-splash);
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: clamp(1.5rem, 5vw, 3rem);
+    overflow: hidden;
+    background: var(--bg-deep);
+    isolation: isolate;
+}
+
+.splash-screen--exiting {
+    pointer-events: none;
+}
+
+.splash-screen__photo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: var(--splash-photo);
+    background-size: cover;
+    background-position: 35% 45%;
+    opacity: 0.1;
+    filter: saturate(0.5) contrast(1.08) brightness(0.82);
+    pointer-events: none;
+}
+
+.splash-screen__mesh {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: radial-gradient(ellipse 85% 65% at 15% 25%, rgba(125, 157, 168, 0.1) 0%, transparent 52%),
+        radial-gradient(ellipse 60% 55% at 88% 78%, rgba(100, 116, 139, 0.08) 0%, transparent 48%),
+        linear-gradient(168deg, rgba(11, 12, 16, 0.94) 0%, rgba(8, 9, 12, 0.97) 100%);
+    pointer-events: none;
+}
+
+.splash-screen__grid {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    opacity: 0.055;
+    pointer-events: none;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, black 20%, transparent 75%);
+}
+
+.splash-screen__ambient {
+    position: absolute;
+    width: min(55vw, 480px);
+    height: min(55vw, 480px);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(125, 157, 168, 0.11) 0%, transparent 68%);
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.splash-screen__ambient--tl {
+    top: -18%;
+    inset-inline-start: -12%;
+}
+
+.splash-screen__ambient--br {
+    bottom: -20%;
+    inset-inline-end: -8%;
+}
+
+.splash-screen__inner {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    max-width: 22.5rem;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.splash-screen__enter {
+    animation: splashEnter 0.75s var(--ease-lux) backwards;
+}
+
+@keyframes splashEnter {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.splash-panel {
+    width: 100%;
+    padding: clamp(1.75rem, 4vw, 2.35rem) clamp(1.5rem, 3vw, 2rem);
+    border-radius: var(--radius-lg);
+    background: rgba(13, 14, 19, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 28px 56px rgba(4, 6, 12, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    display: flex;
+    flex-direction: column;
+    align-items: inherit;
+    gap: clamp(1.5rem, 3vw, 2rem);
+}
+
+.splash-logo-wrap {
+    position: relative;
+    width: 5.5rem;
+    height: 5.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 28%;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 32px rgba(6, 8, 14, 0.35);
+}
+
+.splash-logo-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    border-radius: 32%;
+    background: radial-gradient(circle, rgba(125, 157, 168, 0.15) 0%, transparent 62%);
+    filter: blur(22px);
+    animation: splashLogoGlow 2.8s var(--ease-lux) infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes splashLogoGlow {
+    0%,
+    100% {
+        opacity: 0.85;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.45;
+        transform: scale(1.05);
+    }
+}
+
+.splash-logo {
+    position: relative;
+    width: 4.25rem;
+    height: 4.25rem;
+    object-fit: contain;
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.35));
+}
+
+.splash-brand {
+    font-family: var(--font-heading);
+    font-size: clamp(1.85rem, 5vw, 2.35rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    color: var(--text-primary);
+    text-wrap: balance;
+    margin: 0;
+}
+
+.splash-tagline {
+    margin: 0.35rem 0 0;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    max-width: 28ch;
+    line-height: 1.5;
+}
+
+.splash-progress {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.splash-progress__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.splash-progress__step {
+    text-align: inherit;
+    flex: 1;
+    min-width: 0;
+    letter-spacing: 0.02em;
+}
+
+.splash-progress__pct {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.splash-bars {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.splash-bar-track {
+    position: relative;
+    flex: 1;
+    height: 4px;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.splash-bar-fill {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-radius: var(--radius-pill);
+    background: linear-gradient(90deg, var(--accent-interactive) 0%, var(--accent-primary) 100%);
+    box-shadow: 0 0 14px rgba(125, 157, 168, 0.25);
+    transition: width cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.splash-skip {
+    position: fixed;
+    bottom: clamp(1.25rem, 4vw, 2rem);
+    inset-inline-end: clamp(1.25rem, 4vw, 2rem);
+    z-index: 4;
+    padding: 0.45rem 0.85rem;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color var(--anim-med), background var(--anim-med), border-color var(--anim-med), transform var(--anim-fast);
+}
+
+.splash-skip:hover {
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.splash-skip:active {
+    transform: scale(0.97);
+}
+
