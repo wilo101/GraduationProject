@@ -22,9 +22,10 @@ test.describe('Register with email', () => {
         const response = await res
         expect([200, 400, 422, 429]).toContain(response.status())
 
-        const alert = page.locator('[role="alert"]').first()
-        await expect(alert).toBeVisible({ timeout: 12_000 })
-        const text = (await alert.innerText()).toLowerCase()
+        // Success without session redirects to login with .auth-flash; API errors use .form-error on register
+        const banner = page.locator('.auth-flash, header .form-error').first()
+        await expect(banner).toBeVisible({ timeout: 12_000 })
+        const text = (await banner.innerText()).toLowerCase()
         expect(text.length).toBeGreaterThan(3)
     })
 })

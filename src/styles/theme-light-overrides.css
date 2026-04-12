@@ -34,6 +34,25 @@ html[data-theme='light'] .auth-card::before {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, transparent 42%, transparent 58%, rgba(125, 157, 168, 0.04) 100%);
 }
 
+html[data-theme='light'] .auth-flash--notice {
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.72);
+    border-color: var(--surface-border);
+    box-shadow: var(--shadow-inset-ledge);
+}
+
+html[data-theme='light'] .auth-flash--info {
+    color: #3d5a63;
+    background: color-mix(in srgb, var(--accent-interactive) 12%, #ffffff);
+    border-color: color-mix(in srgb, var(--accent-interactive) 35%, transparent);
+}
+
+html[data-theme='light'] .auth-flash--alert {
+    color: #7f1d1d;
+    background: rgba(254, 226, 226, 0.65);
+    border-color: rgba(220, 38, 38, 0.22);
+}
+
 /* --- Splash --- */
 html[data-theme='light'] .splash-screen__mesh {
     background:

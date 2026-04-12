@@ -88,9 +88,13 @@ export default function Register() {
                 navigate('/')
                 return
             }
-            setFormError(
-                'We sent a confirmation link to your inbox. Open it to verify your email, then come back and sign in to Augustus OS.'
-            )
+            /* Email confirmation required — send user to sign-in with email prefilled + friendly hint */
+            navigate('/login', {
+                state: {
+                    fromRegistration: true,
+                    prefilledEmail: email.trim(),
+                },
+            })
         } finally {
             setSubmitting(false)
         }

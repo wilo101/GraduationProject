@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Mail, Lock, ArrowRight, Phone } from 'lucide-react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AuthScreenShell from '../components/AuthScreenShell'
 import { formatSupabaseAuthError } from '../lib/authErrors'
@@ -36,14 +36,35 @@ export default function Login() {
 
     const [errors, setErrors] = useState({ email: '', password: '', phone: '', otp: '' })
     const [formError, setFormError] = useState('')
+    /** Banner tone: notice = soft guidance, info = positive/update, alert = configuration / serious */
+    const [formErrorVariant, setFormErrorVariant] = useState('alert')
+    const [postRegisterHint, setPostRegisterHint] = useState(false)
     const [submitting, setSubmitting] = useState(false)
+    const location = useLocation()
+
+    const setFlash = (text, variant = 'alert') => {
+        setFormError(text)
+        setFormErrorVariant(variant)
+    }
+
+    const clearFlash = () => setFormError('')
 
     useEffect(() => {
         const fromQuery = consumeOAuthSearchParamsIfError()
         if (fromQuery) {
-            setFormError(formatSupabaseAuthError(fromQuery) || fromQuery)
+            setFlash(formatSupabaseAuthError(fromQuery) || fromQuery, 'alert')
         }
     }, [])
+
+    useEffect(() => {
+        const st = location.state
+        if (st?.fromRegistration && st?.prefilledEmail) {
+            setEmail(st.prefilledEmail)
+            setPostRegisterHint(true)
+            setFormError('')
+            navigate('.', { replace: true, state: {} })
+        }
+    }, [location.state, navigate])
 
     if (!loading && isAuthenticated) return <Navigate to="/" replace />
 
@@ -53,7 +74,7 @@ export default function Login() {
 
     const handleEmailLogin = async (e) => {
         e.preventDefault()
-        setFormError('')
+        clearFlash()
         resetErrors()
 
         const next = { email: '', password: '', phone: '', otp: '' }
@@ -65,7 +86,7 @@ export default function Login() {
         if (next.email || next.password) return
 
         if (!canUseSupabase) {
-            setFormError('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env')
+            setFlash('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env', 'alert')
             return
         }
 
@@ -76,11 +97,14 @@ export default function Login() {
                 password,
             })
             if (error) {
-                setFormError(
-                    error.message === 'Invalid login credentials'
-                        ? 'Invalid email or password.'
-                        : formatSupabaseAuthError(error.message)
-                )
+                if (error.message === 'Invalid login credentials') {
+                    setFlash(
+                        'We couldn’t sign you in with that email and password. Check the password, or confirm your email first if you just registered.',
+                        'notice'
+                    )
+                } else {
+                    setFlash(formatSupabaseAuthError(error.message), 'alert')
+                }
                 return
             }
             navigate('/')
@@ -91,7 +115,7 @@ export default function Login() {
 
     const handleSendOtp = async (e) => {
         e.preventDefault()
-        setFormError('')
+        clearFlash()
         resetErrors()
 
         const next = { email: '', password: '', phone: '', otp: '' }
@@ -102,7 +126,7 @@ export default function Login() {
         if (next.phone) return
 
         if (!canUseSupabase) {
-            setFormError('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env')
+            setFlash('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env', 'alert')
             return
         }
 
@@ -110,11 +134,11 @@ export default function Login() {
         try {
             const { error } = await supabase.auth.signInWithOtp({ phone: p })
             if (error) {
-                setFormError(formatSupabaseAuthError(error.message))
+                setFlash(formatSupabaseAuthError(error.message), 'alert')
                 return
             }
             setOtpSent(true)
-            setFormError('We sent a verification code to your phone.')
+            setFlash('We sent a verification code to your phone.', 'info')
         } finally {
             setSubmitting(false)
         }
@@ -122,7 +146,7 @@ export default function Login() {
 
     const handleVerifyOtp = async (e) => {
         e.preventDefault()
-        setFormError('')
+        clearFlash()
         resetErrors()
 
         const next = { email: '', password: '', phone: '', otp: '' }
@@ -136,7 +160,7 @@ export default function Login() {
         if (next.phone || next.otp) return
 
         if (!canUseSupabase) {
-            setFormError('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env')
+            setFlash('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env', 'alert')
             return
         }
 
@@ -148,7 +172,7 @@ export default function Login() {
                 type: 'sms',
             })
             if (error) {
-                setFormError(formatSupabaseAuthError(error.message))
+                setFlash(formatSupabaseAuthError(error.message), 'alert')
                 return
             }
             navigate('/')
@@ -158,9 +182,9 @@ export default function Login() {
     }
 
     const handleGoogle = async () => {
-        setFormError('')
+        clearFlash()
         if (!supabase) {
-            setFormError('Add Supabase keys in .env (see .env.example).')
+            setFlash('Add Supabase keys in .env (see .env.example).', 'alert')
             return
         }
         const { error } = await supabase.auth.signInWithOAuth({
@@ -170,7 +194,7 @@ export default function Login() {
                 queryParams: { prompt: 'select_account' },
             },
         })
-        if (error) setFormError(formatSupabaseAuthError(error.message))
+        if (error) setFlash(formatSupabaseAuthError(error.message), 'alert')
     }
 
     return (
@@ -178,24 +202,30 @@ export default function Login() {
             <header>
                 <h1 className="auth-display">Welcome back</h1>
                 <p className="auth-lede">Use your Augustus credentials. Maps and feeds load after you sign in.</p>
+                {postRegisterHint ? (
+                    <p className="auth-flash auth-flash--info" role="status">
+                        Check your inbox for a confirmation link, then sign in here with the same password. After that,
+                        you’ll stay signed in on this device.
+                    </p>
+                ) : null}
                 {!isSupabaseConfigured() ? (
-                    <p className="form-error" role="alert" style={{ marginBottom: '1rem', textAlign: 'center' }}>
+                    <p className="auth-flash auth-flash--alert" role="alert">
                         Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in a root .env file (copy from .env.example).
                     </p>
                 ) : null}
                 {oauthError === 'google' ? (
-                    <p className="form-error" role="alert" style={{ marginBottom: '1rem', textAlign: 'center' }}>
+                    <p className="auth-flash auth-flash--alert" role="alert">
                         Google sign-in failed. Enable the Google provider in Supabase and add this URL to Redirect URLs:{' '}
                         {getAuthRedirectUrl()}
                     </p>
                 ) : null}
                 {oauthError === 'token' ? (
-                    <p className="form-error" role="alert" style={{ marginBottom: '1rem', textAlign: 'center' }}>
+                    <p className="auth-flash auth-flash--alert" role="alert">
                         Session link was invalid. Try signing in again.
                     </p>
                 ) : null}
                 {formError ? (
-                    <p className="form-error" role="alert" style={{ marginBottom: '1rem', textAlign: 'center' }}>
+                    <p className={`auth-flash auth-flash--${formErrorVariant}`} role="alert">
                         {formError}
                     </p>
                 ) : null}
@@ -207,7 +237,7 @@ export default function Login() {
                     className="auth-social-btn"
                     onClick={() => {
                         setMethod('email')
-                        setFormError('')
+                        clearFlash()
                         resetErrors()
                         setOtpSent(false)
                         setOtp('')
@@ -226,7 +256,7 @@ export default function Login() {
                     className="auth-social-btn"
                     onClick={() => {
                         setMethod('phone')
-                        setFormError('')
+                        clearFlash()
                         resetErrors()
                         setOtpSent(false)
                         setOtp('')
@@ -381,7 +411,7 @@ export default function Login() {
                             onClick={() => {
                                 setOtpSent(false)
                                 setOtp('')
-                                setFormError('')
+                                clearFlash()
                                 resetErrors()
                             }}
                             style={{ justifyContent: 'center' }}
