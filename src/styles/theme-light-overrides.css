@@ -200,6 +200,13 @@ html[data-theme='light'] .premium-select__option--active {
     background: color-mix(in srgb, var(--accent-interactive) 12%, #ffffff);
 }
 
+html[data-theme='light'] .premium-select--open .premium-select__trigger {
+    border-color: color-mix(in srgb, var(--accent-interactive) 55%, transparent);
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--accent-interactive) 28%, transparent),
+        var(--shadow-inset-ledge);
+}
+
 /* ================================================================
    Diagnostics
    ================================================================ */
