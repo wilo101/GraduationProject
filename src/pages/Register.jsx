@@ -266,7 +266,7 @@ export default function Register() {
                             className="auth-input"
                             type="text"
                             autoComplete="name"
-                            placeholder="Mohamed Marei"
+                            placeholder="Mohamed Marey"
                             value={fullName}
                             onChange={(e) => {
                                 setFullName(e.target.value)
@@ -296,7 +296,7 @@ export default function Register() {
                                     className="auth-input"
                                     type="email"
                                     autoComplete="email"
-                                    placeholder="mohamed.marei@example.com"
+                                    placeholder="mohamed.marey@example.com"
                                     value={email}
                                     onChange={(e) => {
                                         setEmail(e.target.value)
