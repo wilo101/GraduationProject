@@ -306,7 +306,7 @@ export default function Login() {
                     </div>
 
                     <button type="submit" className="auth-primary-btn" disabled={submitting}>
-                        {submitting ? 'Signing in…' : 'تسجيل الدخول'}{' '}
+                        {submitting ? 'Signing in…' : 'Sign in'}{' '}
                         {!submitting ? <ArrowRight size={20} strokeWidth={ICON} aria-hidden /> : null}
                     </button>
                 </form>

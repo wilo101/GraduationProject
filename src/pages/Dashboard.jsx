@@ -4,8 +4,10 @@ import StatusCard from '../components/StatusCard';
 import HouseMap from '../components/HouseMap';
 import PairDevicesModal from '../components/PairDevicesModal';
 import { Scan } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Dashboard = () => {
+    const { t } = useTranslation()
     const [pairModalOpen, setPairModalOpen] = useState(false);
     // State for cards
     const [pressure, setPressure] = useState(65);
@@ -38,22 +40,22 @@ const Dashboard = () => {
         {
             id: 'battery',
             active: sensorValues.battery < 20,
-            title: 'Battery is critically low.',
-            actionHint: 'Reduce movement and return to charging dock.',
-            cta: 'العودة للمنصة',
+            title: t('dashboard.alerts.battery_title'),
+            actionHint: t('dashboard.alerts.battery_desc'),
+            cta: t('dashboard.alerts.battery_cta'),
             onAction: () => window.dispatchEvent(new CustomEvent('robot:returnDock', { detail: { at: new Date().toISOString() } })),
         },
         {
             id: 'temp',
             active: sensorValues.temp >= 50,
-            title: 'Temperature exceeded safe threshold.',
-            actionHint: 'Pause operation and inspect cooling / airflow.',
+            title: t('dashboard.alerts.temp_title'),
+            actionHint: t('dashboard.alerts.temp_desc'),
         },
         {
             id: 'water',
             active: sensorValues.water <= 15,
-            title: 'Water tank is below reserve level.',
-            actionHint: 'Refill tank before next suppression route.',
+            title: t('dashboard.alerts.water_title'),
+            actionHint: t('dashboard.alerts.water_desc'),
         },
     ].filter((a) => a.active && !dismissedAlerts[a.id])
 
@@ -97,7 +99,7 @@ const Dashboard = () => {
                                     onClick={() => setDismissedAlerts((s) => ({ ...s, [a.id]: true }))}
                                     style={{ width: 'auto', padding: '0.5rem 0.75rem', fontSize: '0.82rem' }}
                                 >
-                                    Dismiss
+                                    {t('dashboard.alerts.dismiss')}
                                 </button>
                             </div>
                         </div>
@@ -108,11 +110,11 @@ const Dashboard = () => {
             <header className="ops-page-header">
                 <div>
                     <h1 dir="auto" className="mixed-bidi ops-page-header__title">
-                        Operations center
+                        {t('dashboard.title')}
                     </h1>
-                    <p className="ops-page-header__kicker">Station time · {stationClock}</p>
+                    <p className="ops-page-header__kicker">{t('dashboard.station_time')} · {stationClock}</p>
                     <p className="ops-page-header__desc">
-                        Shared organizational view for the monitoring room — live cameras, sensors, and map. Any on-duty operator can use this screen.
+                        {t('dashboard.description')}
                     </p>
                 </div>
 
@@ -124,7 +126,7 @@ const Dashboard = () => {
                         onClick={() => setPairModalOpen(true)}
                     >
                         <Scan size={18} aria-hidden />
-                        View & Pair Devices
+                        {t('dashboard.pair_devices')}
                     </button>
                 </div>
             </header>
@@ -139,7 +141,7 @@ const Dashboard = () => {
                         <div className="dashboard-frame__cards">
                             <StatusCard
                                 type="temp"
-                                label="درجة الحرارة"
+                                label={t('dashboard.sensors.temp')}
                                 value={String(sensorValues.temp)}
                                 unit="°C"
                                 threshold={50}
@@ -149,7 +151,7 @@ const Dashboard = () => {
                             />
                             <StatusCard
                                 type="battery"
-                                label="البطارية"
+                                label={t('dashboard.sensors.battery')}
                                 value={String(sensorValues.battery)}
                                 unit="%"
                                 threshold={20}
@@ -158,7 +160,7 @@ const Dashboard = () => {
                             />
                             <StatusCard
                                 type="water"
-                                label="خزان المياه"
+                                label={t('dashboard.sensors.water')}
                                 value={String(sensorValues.water)}
                                 unit="%"
                                 threshold={15}
@@ -167,7 +169,7 @@ const Dashboard = () => {
                             />
                             <StatusCard
                                 type="pressure"
-                                label="ضغط المياه"
+                                label={t('dashboard.sensors.pressure')}
                                 value={pressure}
                                 unit=" PSI"
                                 maxValue={100}

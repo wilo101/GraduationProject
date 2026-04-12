@@ -49,6 +49,54 @@ html[data-theme='light'] .splash-screen__grid {
         linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
 }
 
+/* ================================================================
+   Lacquer gradient borders (light) — white → slate ring via masked ::before
+   ================================================================ */
+html[data-theme='light'] .ops-surface-frame,
+html[data-theme='light'] .diag-ops-frame,
+html[data-theme='light'] .map-ops-frame,
+html[data-theme='light'] .deploy-control {
+    position: relative;
+    border: none;
+    isolation: isolate;
+}
+
+html[data-theme='light'] .ops-surface-frame::before,
+html[data-theme='light'] .diag-ops-frame::before,
+html[data-theme='light'] .map-ops-frame::before,
+html[data-theme='light'] .deploy-control::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--border-luxury-edge);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+}
+
+html[data-theme='light'] .ops-surface-frame > *,
+html[data-theme='light'] .diag-ops-frame > *,
+html[data-theme='light'] .map-ops-frame > *,
+html[data-theme='light'] .deploy-control > * {
+    position: relative;
+    z-index: 1;
+}
+
+html[data-theme='light'] .ops-surface-frame__accent,
+html[data-theme='light'] .diag-ops-frame__accent,
+html[data-theme='light'] .map-ops-frame__accent,
+html[data-theme='light'] .deploy-control__accent {
+    z-index: 2;
+}
+
+/* ================================================================
+   Ops Frames — the main container shells (Dashboard, Diag, Map, Deploy)
+   ================================================================ */
 html[data-theme='light'] .ops-surface-frame {
     background: var(--ops-frame-gradient);
     box-shadow: var(--shadow-ops-frame);
@@ -70,6 +118,37 @@ html[data-theme='light'] .dashboard-frame__map .house-map {
     border-color: var(--border-default);
 }
 
+/* ================================================================
+   Glass panels / cards — lacquer gradient rim (matches ops frames)
+   ================================================================ */
+html[data-theme='light'] .glass-panel,
+html[data-theme='light'] .glass-card {
+    position: relative;
+    border: none;
+    isolation: isolate;
+}
+
+html[data-theme='light'] .glass-panel::before,
+html[data-theme='light'] .glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--border-luxury-edge);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+}
+
+html[data-theme='light'] .glass-panel > *,
+html[data-theme='light'] .glass-card > * {
+    position: relative;
+    z-index: 1;
+}
 
 html[data-theme='light'] .account-edit-panel.glass-card {
     border: none;
@@ -250,6 +329,35 @@ html[data-theme='light'] .map-env-strip__ico {
     filter: drop-shadow(0 1px 1px rgba(125, 157, 168, 0.25));
 }
 
+html[data-theme='light'] .map-page__body {
+    position: relative;
+    border: none;
+    isolation: isolate;
+    background:
+        radial-gradient(ellipse 95% 72% at 50% 0%, rgba(125, 157, 168, 0.06) 0%, transparent 52%),
+        linear-gradient(178deg, #f1f5f9 0%, #e8eef4 45%, #e2e8f0 100%);
+    box-shadow: inset 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+html[data-theme='light'] .map-page__body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--border-luxury-edge);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+}
+
+html[data-theme='light'] .map-page__body > * {
+    position: relative;
+    z-index: 1;
+}
 
 html[data-theme='light'] .map-sidebar {
     background:
@@ -613,6 +721,25 @@ html[data-theme='light'] .deploy-feed-wrap {
     isolation: isolate;
 }
 
+html[data-theme='light'] .deploy-feed-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--border-luxury-edge);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 2;
+}
+
+html[data-theme='light'] .deploy-feed-wrap > * {
+    position: relative;
+    z-index: 3;
+}
 
 html[data-theme='light'] .deploy-feed-online__cam-label {
     color: var(--ops-metric-emphasis);
@@ -664,6 +791,25 @@ html[data-theme='light'] .deploy-control-deck {
         inset 0 -1px 0 rgba(100, 116, 139, 0.14);
 }
 
+html[data-theme='light'] .deploy-control-deck::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--border-luxury-edge);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+}
+
+html[data-theme='light'] .deploy-control-deck > * {
+    position: relative;
+    z-index: 1;
+}
 
 html[data-theme='light'] .deploy-control-deck:hover {
     box-shadow:
@@ -679,6 +825,25 @@ html[data-theme='light'] .deploy-card {
     background: var(--card-tactical-soft);
 }
 
+html[data-theme='light'] .deploy-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--border-luxury-edge);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+}
+
+html[data-theme='light'] .deploy-card > * {
+    position: relative;
+    z-index: 1;
+}
 
 html[data-theme='light'] .deploy-deck__rail {
     border-bottom: 1px solid var(--border-strong);
@@ -733,9 +898,9 @@ html[data-theme='light'] .deploy-tel-stat__unit {
 }
 
 html[data-theme='light'] .deploy-tel-card__badge {
-    color: var(--status-good);
-    border-color: color-mix(in srgb, var(--status-good) 35%, transparent);
-    background: color-mix(in srgb, var(--status-good) 12%, transparent);
+    color: #047857;
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.12);
 }
 
 html[data-theme='light'] .deploy-tel-card__section-label {
@@ -766,21 +931,21 @@ html[data-theme='light'] .mo-label {
 }
 
 html[data-theme='light'] .deploy-hero__status--live {
-    color: var(--status-critical);
-    border-color: color-mix(in srgb, var(--status-critical) 35%, transparent);
+    color: #b91c1c;
+    border-color: rgba(220, 38, 38, 0.35);
     background: linear-gradient(180deg, #fff1f2 0%, #ffe4e6 100%);
 }
 
 html[data-theme='light'] .deploy-hero__status--live .deploy-hero__status-dot {
-    background: var(--status-critical);
+    background: #ef4444;
 }
 
 html[data-theme='light'] .deploy-speed-btn {
-    border: 1px solid var(--border-strong);
+    border: 1px solid var(--border-default);
     background: linear-gradient(180deg, #e8eef4 0%, #dfe7ef 100%);
     color: var(--text-primary);
     font-weight: 700;
-    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.75), 0 2px 6px rgba(15, 23, 42, 0.05);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(15, 23, 42, 0.03);
     transition: box-shadow 200ms var(--ease-lux), background 200ms var(--ease-lux);
 }
 
@@ -788,7 +953,7 @@ html[data-theme='light'] .deploy-speed-btn:hover {
     background: linear-gradient(180deg, #f1f5f9 0%, #e8eef4 100%);
     color: var(--text-primary);
     border-color: var(--accent-interactive);
-    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06), var(--shadow-inset-ledge);
+    box-shadow: 0 4px 8px rgba(15, 23, 42, 0.04), inset 0 1px 2px rgba(255, 255, 255, 0.4);
 }
 
 html[data-theme='light'] .deploy-speed-btn--active {
@@ -945,11 +1110,11 @@ html[data-theme='light'] .mo-indicator {
 /* --- D-Pad: Sculpted physical buttons --- */
 html[data-theme='light'] .mo-dpad-btn {
     background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 70%, #e8edf3 100%);
-    border-color: rgba(125, 157, 168, 0.22);
+    border-color: rgba(125, 157, 168, 0.15);
     box-shadow:
-        0 3px 8px rgba(0, 0, 0, 0.04),
-        inset 0 2px 2px rgba(255, 255, 255, 0.9),
-        inset 0 -1px 3px rgba(125, 157, 168, 0.12);
+        0 2px 4px rgba(0, 0, 0, 0.02),
+        inset 0 1px 2px rgba(255, 255, 255, 0.6),
+        inset 0 -1px 3px rgba(125, 157, 168, 0.08);
     color: var(--text-secondary);
     transition: box-shadow 180ms var(--ease-lux), background 180ms var(--ease-lux), transform 180ms var(--ease-lux);
 }
@@ -958,9 +1123,9 @@ html[data-theme='light'] .mo-dpad-btn:hover {
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
     color: var(--text-primary);
     box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.06),
-        inset 0 2px 2px rgba(255, 255, 255, 0.9),
-        inset 0 -1px 3px rgba(125, 157, 168, 0.1);
+        0 4px 8px rgba(0, 0, 0, 0.04),
+        inset 0 1px 2px rgba(255, 255, 255, 0.6),
+        inset 0 -1px 3px rgba(125, 157, 168, 0.06);
     transform: translateY(-1px);
 }
 

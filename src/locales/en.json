@@ -1,0 +1,263 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "map": "Map",
+    "deploy": "Deploy",
+    "diagnostics": "Diagnostics",
+    "settings": "Settings",
+    "estop": "Emergency Stop"
+  },
+  "theme": {
+    "light": "Light",
+    "night": "Night"
+  },
+  "estop": {
+    "title": "Confirm Emergency Stop",
+    "message": "This will immediately stop robot movement. Continue?",
+    "cancel": "Cancel",
+    "confirm": "Stop now"
+  },
+  "dashboard": {
+    "title": "Operations center",
+    "station_time": "Station time",
+    "description": "Shared organizational view for the monitoring room — live cameras, sensors, and map. Any on-duty operator can use this screen.",
+    "pair_devices": "View & Pair Devices",
+    "sensors": {
+      "temp": "Temperature",
+      "battery": "Battery",
+      "water": "Water Tank",
+      "pressure": "Water Pressure"
+    },
+    "alerts": {
+      "battery_title": "Battery is critically low.",
+      "battery_desc": "Reduce movement and return to charging dock.",
+      "battery_cta": "Return to dock",
+      "temp_title": "Temperature exceeded safe threshold.",
+      "temp_desc": "Pause operation and inspect cooling / airflow.",
+      "water_title": "Water tank is below reserve level.",
+      "water_desc": "Refill tank before next suppression route.",
+      "dismiss": "Dismiss"
+    }
+  },
+  "diagnostics": {
+    "title": "System Diagnostics",
+    "description": "Run a guided integrity check across hardware + software subsystems. Diagnostics start only when you click ",
+    "description_bold": "Start test",
+    "actions": {
+      "run_all": "Run all",
+      "running": "Running…",
+      "stop": "Stop",
+      "export": "Export Report"
+    },
+    "status": {
+      "running": "Running diagnostics",
+      "complete": "Diagnostics complete",
+      "ready": "Ready",
+      "last_run": "Last run: ",
+      "no_runs": "No runs yet",
+      "scanning": "SCANNING",
+      "idle": "IDLE"
+    },
+    "kpi": {
+      "subsystems": "Subsystems",
+      "eta": "ETA",
+      "mode": "Mode",
+      "result": "Result"
+    },
+    "results_title": "Subsystem results",
+    "summary": {
+      "live": "Live analysis in progress…",
+      "idle": "Press Run all or Test on a subsystem.",
+      "nominal": "All subsystems nominal."
+    },
+    "item": {
+      "operational": "Operational",
+      "failure": "Failure detected — action required",
+      "analyzing": "Analyzing…",
+      "ready": "Ready",
+      "pass": "pass",
+      "fail": "fail",
+      "live": "live",
+      "test": "Test",
+      "hide_details": "Hide details",
+      "show_details": "Show details",
+      "retry": "Retry",
+      "error_code": "Error code:"
+    },
+    "systems": {
+      "core": "Core Processor",
+      "sensors": "Sensor Array",
+      "motors": "Motor Systems",
+      "cameras": "Optical Cameras",
+      "wifi": "Wireless Uplink",
+      "power": "Power Cells"
+    }
+  },
+  "deploy": {
+    "title": "Manual Override",
+    "kicker": "Remote operations · Direct control",
+    "lede": "Drive vector and fine adjust when autonomy is suspended. Engage only after link health is confirmed.",
+    "tooltip_ready": "Ready to engage",
+    "tooltip_disabled": "Cannot engage — connection not confirmed",
+    "status_active": "Manual control active",
+    "status_standby": "Standby",
+    "engaged": "Engaged",
+    "engage": "Engage",
+    "metrics": {
+      "latency": "Latency",
+      "loss": "Loss",
+      "signal": "Signal",
+      "link": "Link",
+      "link_confirmed": "Confirmed",
+      "link_unconfirmed": "Unconfirmed",
+      "ms": "ms"
+    },
+    "feed": {
+      "live": "LIVE",
+      "retry": "Retry",
+      "unavailable": "Camera unavailable · last seen "
+    },
+    "controls": {
+      "deck": "Control deck",
+      "drive": "Drive",
+      "telemetry": "Telemetry",
+      "live": "Live",
+      "speed": "Speed",
+      "heading": "Heading",
+      "movement_log": "Movement log",
+      "adjust": "Adjust",
+      "speed_profile": "Speed profile",
+      "speeds": {
+        "slow": "Slow",
+        "normal": "Normal",
+        "fast": "Very Fast"
+      }
+    },
+    "shortcuts": {
+      "label": "↑↓←→ or WASD · Space stop · Esc disengage",
+      "detail": "Arrow keys adjust the D-pad. WASD drives the analog stick. Space stops motion. Escape disengages and stops."
+    },
+    "focus": {
+      "kicker": "Focused monitoring mode",
+      "close": "Close focus",
+      "robot_status": "Robot status",
+      "mode": "Mode",
+      "operator_actions": "Operator actions",
+      "send_alert": "Send robot alert",
+      "force_standby": "Force standby"
+    }
+  },
+  "map": {
+    "title": "Map",
+    "description": "Outdoor site map — zones, patrol coverage, and robot position for your organization.",
+    "toolbar": {
+      "layers": "Layers",
+      "center": "Center robot"
+    },
+    "layers": {
+      "grid": "Grid",
+      "labels": "Zone labels",
+      "robot": "Robot marker",
+      "pathHistory": "Path history",
+      "wind": "Wind field",
+      "sensors": "Sensors"
+    },
+    "env": {
+      "wind": "Wind {{speed}} km/h · downwind bearing {{heading}}°",
+      "battery": "Battery"
+    },
+    "sidebar": {
+      "search": "Search zones…",
+      "last_scan": "Last scan · {{time}}",
+      "status": {
+        "clear": "ZONE CLEAR",
+        "low_risk": "LOW RISK",
+        "needs_scan": "NEEDS SCAN"
+      },
+      "actions": {
+        "scan": "Scan area",
+        "navigate": "Send to sector"
+      }
+    },
+    "canvas": {
+      "overview": "Site overview",
+      "live": "Organization · Live",
+      "drag_to_pan": "Drag to pan",
+      "viewport": "Viewport"
+    },
+    "status": {
+      "robot": "Robot ·",
+      "bat": "Bat",
+      "hover": "Hover map for WGS‑84",
+      "last_scan": "Last scan · {{time}}",
+      "moving": "Moving"
+    },
+    "nav": {
+      "scanning": "Scanning {{name}}…",
+      "routing": "Routing to {{name}}…"
+    },
+    "zones": {
+      "yard": "Main yard",
+      "loading": "Loading dock",
+      "access": "Access road",
+      "storage": "Storage yard"
+    },
+    "time": {
+      "just_now": "Just now",
+      "ago_2m": "2m ago",
+      "ago_9m": "9m ago",
+      "ago_15m": "15m ago",
+      "ago_1h": "1h ago"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Account credentials, security, and operator preferences for this console.",
+    "account_preferences": "Account and preferences"
+  },
+  "account": {
+    "saved_maps": "Saved Maps",
+    "updated_ago": "Updated {{time}} ago",
+    "new_map": "+ New Map",
+    "security": "Security & Login",
+    "change_email": "Change Email",
+    "new_email": "New email",
+    "change_password": "Change Password",
+    "new_password": "New password",
+    "confirm_password": "Confirm password",
+    "preferences": "Preferences",
+    "notifications": "Notifications",
+    "notify_hint": "Critical and status alerts will surface in the operations center when enabled.",
+    "country": "Country / Region",
+    "full_name": "Full name",
+    "logout": "Log Out",
+    "confirm_logout": "Confirm logout",
+    "robot_running": "The robot is still running. Logging out will not stop it. Continue?",
+    "logout_message": "You are about to sign out of your account. Continue?",
+    "stop_robot_first": "Stop robot first",
+    "cancel": "Cancel",
+    "logout_anyway": "Log out anyway",
+    "save": "Save",
+    "saving": "Saving…",
+    "signed_in": "Signed in • Online",
+    "premium": "Premium Member • Online",
+    "operator": "Operator"
+  },
+  "camera": {
+    "live": "LIVE",
+    "mute": "Mute microphone",
+    "unmute": "Unmute microphone",
+    "two_way_audio": "Two-way audio (microphone)",
+    "exit_fullscreen": "Exit fullscreen",
+    "fullscreen": "Fullscreen",
+    "default_label": "Perimeter Cam 01",
+    "default_zone": "Live zone"
+  },
+  "status_card": {
+    "units": {
+      "celsius": "°C",
+      "percent": "%",
+      "psi": " PSI"
+    }
+  }
+}

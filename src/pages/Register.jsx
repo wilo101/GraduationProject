@@ -410,7 +410,7 @@ export default function Register() {
                               ? 'Verifying…'
                               : 'Sending…'
                         : isEmail
-                          ? 'إنشاء حساب'
+                          ? 'Create account'
                           : otpSent
                             ? 'Verify code'
                             : 'Send code'}{' '}
