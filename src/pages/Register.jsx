@@ -89,7 +89,7 @@ export default function Register() {
                 return
             }
             setFormError(
-                'Check your email to confirm your account (Supabase email confirmation is on). You can turn it off under Authentication → Providers → Email in the Supabase dashboard for faster testing.'
+                'We sent a confirmation link to your inbox. Open it to verify your email, then come back and sign in to Augustus OS.'
             )
         } finally {
             setSubmitting(false)
