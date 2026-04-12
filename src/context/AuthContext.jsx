@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import {
+    buildBypassSession,
+    clearBypassSessionStorage,
+    loadStoredBypassSession,
+    saveBypassSession,
+} from '../lib/devAuthBypass'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
 const E2E_AUTH =
@@ -38,6 +44,13 @@ export function AuthProvider({ children }) {
             return
         }
 
+        const storedBypass = loadStoredBypassSession()
+        if (storedBypass) {
+            setSession(storedBypass)
+            setLoading(false)
+            return
+        }
+
         if (!supabase) {
             setLoading(false)
             return
@@ -51,7 +64,10 @@ export function AuthProvider({ children }) {
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, s) => {
-            setSession(s)
+            setSession((prev) => {
+                if (prev?.access_token === 'dev-bypass-local-only' && !s) return prev
+                return s
+            })
         })
 
         return () => subscription.unsubscribe()
@@ -61,7 +77,14 @@ export function AuthProvider({ children }) {
 
     const isAuthenticated = Boolean(session)
 
+    const loginDevBypass = useCallback((email) => {
+        const s = buildBypassSession(email)
+        saveBypassSession(s)
+        setSession(s)
+    }, [])
+
     const logout = async () => {
+        clearBypassSessionStorage()
         if (E2E_AUTH) {
             setSession(null)
             return
@@ -77,9 +100,10 @@ export function AuthProvider({ children }) {
             session,
             loading,
             logout,
+            loginDevBypass,
             supabaseReady: isSupabaseConfigured(),
         }),
-        [isAuthenticated, user, session, loading]
+        [isAuthenticated, user, session, loading, loginDevBypass]
     )
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

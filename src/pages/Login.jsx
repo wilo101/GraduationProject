@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { formatSupabaseAuthError } from '../lib/authErrors'
 import { consumeOAuthSearchParamsIfError, getAuthRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
 import { markSmoothAppEnter } from '../lib/appEnterTransition'
+import { isDevBypassEmail } from '../lib/devAuthBypass'
 
 const googleIcon = (
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
@@ -19,7 +20,7 @@ const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
 const ICON = 1.75
 
 export default function Login() {
-    const { isAuthenticated, loading } = useAuth()
+    const { isAuthenticated, loading, loginDevBypass } = useAuth()
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const oauthError = searchParams.get('error')
@@ -70,13 +71,28 @@ export default function Login() {
         clearFlash()
         resetErrors()
 
+        const trimmedEmail = email.trim()
+        const bypass = isDevBypassEmail(trimmedEmail)
+
         const next = { email: '', password: '' }
-        if (!email.trim()) next.email = 'Enter the email you signed up with.'
+        if (!trimmedEmail) next.email = 'Enter the email you signed up with.'
         else if (!emailOk(email)) next.email = 'That does not look like a valid email address.'
         if (!password) next.password = 'Password is required.'
-        else if (password.length < 8) next.password = 'Use at least 8 characters.'
+        else if (!bypass && password.length < 8) next.password = 'Use at least 8 characters.'
         setErrors(next)
         if (next.email || next.password) return
+
+        if (bypass) {
+            setSubmitting(true)
+            try {
+                loginDevBypass(trimmedEmail)
+                markSmoothAppEnter()
+                navigate('/')
+            } finally {
+                setSubmitting(false)
+            }
+            return
+        }
 
         if (!canUseSupabase) {
             setFlash('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env', 'alert')
