@@ -4,6 +4,7 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-m
 import { User, Map as MapIcon, Mail, Lock, Bell, Globe, ChevronRight, LogOut, Check, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import CountrySelect from '../components/CountrySelect';
 
 const AccountSection = ({ title, children }) => (
     <div style={{ marginBottom: '2.5rem' }}>
@@ -536,28 +537,11 @@ export function AccountSettingsPanel({ embedded = false }) {
                                     </label>
                                     <label style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
                                         Country / Region
-                                        <div className="auth-input-wrap" style={{ margin: 0 }}>
-                                            <select
-                                                value={country}
-                                                onChange={(e) => setCountry(e.target.value)}
-                                                className="auth-input auth-input--plain"
-                                                autoComplete="country-name"
-                                                style={{ appearance: 'none', cursor: 'pointer', display: 'block', width: '100%' }}
-                                            >
-                                                <option value="Egypt">Egypt</option>
-                                                <option value="Saudi Arabia">Saudi Arabia</option>
-                                                <option value="United Arab Emirates">United Arab Emirates</option>
-                                                <option value="United States">United States</option>
-                                                <option value="United Kingdom">United Kingdom</option>
-                                                <option value="Germany">Germany</option>
-                                                <option value="France">France</option>
-                                                <option value="Japan">Japan</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                            <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-secondary)' }}>
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                                            </div>
-                                        </div>
+                                        <CountrySelect
+                                            id="account-country"
+                                            value={country}
+                                            onChange={setCountry}
+                                        />
                                     </label>
                                     <div className="account-inline-btns">
                                         <button
