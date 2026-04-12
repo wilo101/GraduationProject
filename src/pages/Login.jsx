@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Mail, Lock, ArrowRight, Phone } from 'lucide-react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AuthScreenShell from '../components/AuthScreenShell'
 import { formatSupabaseAuthError } from '../lib/authErrors'
-import { getAuthRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
+import { consumeOAuthSearchParamsIfError, getAuthRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
 
 const googleIcon = (
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
@@ -37,6 +37,13 @@ export default function Login() {
     const [errors, setErrors] = useState({ email: '', password: '', phone: '', otp: '' })
     const [formError, setFormError] = useState('')
     const [submitting, setSubmitting] = useState(false)
+
+    useEffect(() => {
+        const fromQuery = consumeOAuthSearchParamsIfError()
+        if (fromQuery) {
+            setFormError(formatSupabaseAuthError(fromQuery) || fromQuery)
+        }
+    }, [])
 
     if (!loading && isAuthenticated) return <Navigate to="/" replace />
 

@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { User, Mail, Lock, ArrowRight, Phone } from 'lucide-react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AuthScreenShell from '../components/AuthScreenShell'
 import { formatSupabaseAuthError } from '../lib/authErrors'
-import { getAuthRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
+import { consumeOAuthSearchParamsIfError, getAuthRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
 
 const googleIcon = (
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
@@ -22,6 +22,8 @@ const ICON = 1.75
 export default function Register() {
     const { isAuthenticated, loading } = useAuth()
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+    const oauthError = searchParams.get('error')
     const canUseSupabase = useMemo(() => Boolean(supabase), [])
 
     const [method, setMethod] = useState('email') // 'email' | 'phone'
@@ -38,6 +40,13 @@ export default function Register() {
     const [errors, setErrors] = useState({ fullName: '', email: '', password: '', phone: '', otp: '' })
     const [formError, setFormError] = useState('')
     const [submitting, setSubmitting] = useState(false)
+
+    useEffect(() => {
+        const fromQuery = consumeOAuthSearchParamsIfError()
+        if (fromQuery) {
+            setFormError(formatSupabaseAuthError(fromQuery) || fromQuery)
+        }
+    }, [])
 
     if (!loading && isAuthenticated) return <Navigate to="/" replace />
 
@@ -184,6 +193,12 @@ export default function Register() {
                 {!isSupabaseConfigured() ? (
                     <p className="form-error" role="alert" style={{ marginBottom: '1rem', textAlign: 'center' }}>
                         Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in a root .env file.
+                    </p>
+                ) : null}
+                {oauthError === 'google' ? (
+                    <p className="form-error" role="alert" style={{ marginBottom: '1rem', textAlign: 'center' }}>
+                        Google sign-in failed. Enable the Google provider in Supabase (Client ID and Secret from Google
+                        Cloud) and add this URL to Supabase Redirect URLs: {getAuthRedirectUrl()}
                     </p>
                 ) : null}
                 {formError ? (
