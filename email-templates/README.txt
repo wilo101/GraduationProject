@@ -11,7 +11,9 @@ Supabase sends signup / magic-link / reset emails. The BODY is edited in the das
 
 3) Keep the Go template variables exactly as in the files: {{ .ConfirmationURL }} etc.
 
-3b) Images in templates: use <img src="https://..."> only (no local paths). confirm-signup.html uses {{ .SiteURL }}/email-logo.png — put email-logo.png in the repo public/ folder and deploy; Supabase “Site URL” must match your app root (e.g. https://user.github.io/GraduationProject/). Or replace the src with any full URL (CDN, Supabase Storage public bucket).
+3b) Images: must be a full https:// URL. Supabase dashboard *preview* does not fill {{ .SiteURL }} reliably, so the logo uses a stable raw GitHub URL (raw.githubusercontent.com/…/main/public/email-logo.png). Update user/repo if you fork, or host the file on any CDN.
+
+3c) Signup name in email: confirm-signup uses {{ .Data.full_name }} / {{ .Data.name }} — same keys as signUp({ options: { data: { full_name, name }}}) in Register.jsx. If the name is empty, the line falls back to “Hello,”.
 
 4) Site URL & redirects: Authentication → URL Configuration — set Site URL to your live app (e.g. GitHub Pages URL). Add the same to Redirect URLs. Your app already sends emailRedirectTo from code.
 

@@ -13,7 +13,7 @@
 <body style="margin:0;padding:0;background-color:#0c0d11;">
   <!-- Preheader (hidden in inbox preview clients that support it) -->
   <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
-    Confirm your email to open the Augustus OS operations console.
+    {{ if .Data }}{{ if .Data.full_name }}Hi {{ .Data.full_name }} — {{ else if .Data.name }}Hi {{ .Data.name }} — {{ end }}{{ end }}confirm your Augustus OS account.
   </div>
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#0c0d11;">
     <tr>
@@ -25,8 +25,8 @@
           </tr>
           <tr>
             <td style="padding:0 28px 0 28px;padding-top:24px;text-align:center;">
-              <!-- Image must be a public HTTPS URL. With Site URL = your app root (e.g. …/GraduationProject/), deploy public/email-logo.png so this resolves. -->
-              <img src="{{ .SiteURL }}/email-logo.png" width="112" alt="Augustus OS" style="display:block;margin:0 auto 14px;height:auto;max-width:112px;border:0;outline:none;" />
+              <!-- Stable HTTPS URL so Supabase *preview* and real inboxes can load it. {{ .SiteURL }} is often empty/unset in dashboard preview → broken image. Change user/repo if you fork. Alternative: {{ .SiteURL }}email-logo.png after Site URL is set (works in sent mail only). -->
+              <img src="https://raw.githubusercontent.com/wilo101/GraduationProject/main/public/email-logo.png" width="112" alt="Augustus OS" style="display:block;margin:0 auto 14px;height:auto;max-width:112px;border:0;outline:none;" />
             </td>
           </tr>
           <tr>
@@ -38,7 +38,8 @@
                 Confirm your email
               </h1>
               <p style="margin:14px 0 0 0;font-family:'DM Sans','Tajawal',Segoe UI,system-ui,sans-serif;font-size:15px;font-weight:400;line-height:1.58;color:rgba(241,245,249,0.82);max-width:34em;">
-                You’re one step away from the operations dashboard — maps, fleet status, and site feeds. Use the button below to verify this address.
+                {{ if .Data }}{{ if .Data.full_name }}Hi {{ .Data.full_name }},{{ else if .Data.name }}Hi {{ .Data.name }},{{ else }}Hello,{{ end }}{{ else }}Hello,{{ end }}
+                you’re one step away from the operations dashboard — maps, fleet status, and site feeds. Use the button below to verify <span style="color:#cbd5e1;">{{ .Email }}</span>.
               </p>
             </td>
           </tr>
