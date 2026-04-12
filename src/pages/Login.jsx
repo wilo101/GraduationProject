@@ -255,7 +255,7 @@ export default function Login() {
                                 className="auth-input"
                                 type="email"
                                 autoComplete="email"
-                                placeholder="you@example.com"
+                                placeholder="mohamed.marei@example.com"
                                 value={email}
                                 onChange={(e) => {
                                     setEmail(e.target.value)
