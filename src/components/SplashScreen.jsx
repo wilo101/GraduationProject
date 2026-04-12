@@ -126,7 +126,7 @@ export default function SplashScreen({
             <div className="splash-screen__inner splash-screen__enter" lang="en">
                 <div className="splash-panel">
                     <div className="splash-logo-wrap">
-                        <img className="splash-logo" src={logo} alt="Augustus OS" />
+                        <img className="splash-logo" src={logo} alt="أوجوستوس" />
                     </div>
 
                     <header>

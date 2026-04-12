@@ -50,7 +50,7 @@ export default function EStopButton() {
                 }}
             >
                 <OctagonX size={18} aria-hidden />
-                {armed ? 'Confirm E‑Stop' : 'Emergency Stop'}
+                {armed ? 'Confirm E‑Stop' : 'توقف طوارئ'}
             </button>
 
             {lastAction ? (

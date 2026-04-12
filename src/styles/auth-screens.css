@@ -294,17 +294,6 @@
     padding: 0 0.15rem;
 }
 
-/* Primary / social buttons: extend global auth-* from index.css */
-.auth-primary-btn:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.auth-primary-btn:disabled:hover {
-    filter: none;
-    box-shadow: none;
-}
 
 /* Legal placeholder pages */
 .auth-legal-page {

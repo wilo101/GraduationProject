@@ -40,7 +40,7 @@ const Dashboard = () => {
             active: sensorValues.battery < 20,
             title: 'Battery is critically low.',
             actionHint: 'Reduce movement and return to charging dock.',
-            cta: 'Return to dock',
+            cta: 'العودة للمنصة',
             onAction: () => window.dispatchEvent(new CustomEvent('robot:returnDock', { detail: { at: new Date().toISOString() } })),
         },
         {
@@ -139,7 +139,7 @@ const Dashboard = () => {
                         <div className="dashboard-frame__cards">
                             <StatusCard
                                 type="temp"
-                                label="Temperature"
+                                label="درجة الحرارة"
                                 value={String(sensorValues.temp)}
                                 unit="°C"
                                 threshold={50}
@@ -149,7 +149,7 @@ const Dashboard = () => {
                             />
                             <StatusCard
                                 type="battery"
-                                label="Battery"
+                                label="البطارية"
                                 value={String(sensorValues.battery)}
                                 unit="%"
                                 threshold={20}
@@ -158,7 +158,7 @@ const Dashboard = () => {
                             />
                             <StatusCard
                                 type="water"
-                                label="Water Tank"
+                                label="خزان المياه"
                                 value={String(sensorValues.water)}
                                 unit="%"
                                 threshold={15}
@@ -167,7 +167,7 @@ const Dashboard = () => {
                             />
                             <StatusCard
                                 type="pressure"
-                                label="Water Pressure"
+                                label="ضغط المياه"
                                 value={pressure}
                                 unit=" PSI"
                                 maxValue={100}

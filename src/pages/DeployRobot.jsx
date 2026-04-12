@@ -27,7 +27,7 @@ const DeployRobot = () => {
     const [stick, setStick] = useState({ x: 0, y: 0 });
     const [dpad, setDpad] = useState({ up: false, down: false, left: false, right: false });
     const [lastCmd, setLastCmd] = useState('idle');
-    const [speed, setSpeed] = useState('normal');
+    const [speed, setSpeed] = useState('عادي');
     const [latencyMs, setLatencyMs] = useState(24);
     const [packetLoss, setPacketLoss] = useState(0);
     const [commandLog, setCommandLog] = useState([]);
@@ -63,7 +63,7 @@ const DeployRobot = () => {
 
     const focusCameras = useMemo(
         () => [
-            { id: 'cam-01', name: 'Perimeter cam 01', zone: 'Gate lane', health: 'stable' },
+            { id: 'cam-01', name: 'كاميرا المحيط 01', zone: 'Gate lane', health: 'stable' },
             { id: 'cam-02', name: 'Thermal cam 02', zone: 'Storage north', health: 'warning' },
             { id: 'cam-03', name: 'Dock cam 03', zone: 'Loading dock', health: 'stable' },
             { id: 'cam-04', name: 'Aerial relay 04', zone: 'Access road', health: 'stable' },
@@ -77,7 +77,7 @@ const DeployRobot = () => {
     };
 
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-    const speedScale = speed === 'slow' ? 0.45 : speed === 'turbo' ? 1.25 : 0.85;
+    const speedScale = speed === 'بطيء' ? 0.45 : speed === 'سريع جداً' ? 1.25 : 0.85;
 
     const stickMag = useMemo(() => Math.min(1, Math.hypot(stick.x, stick.y)), [stick]);
     const liveSpeedMs = useMemo(() => Number((stickMag * 1.8 * speedScale).toFixed(2)), [stickMag, speedScale]);
@@ -403,7 +403,7 @@ const DeployRobot = () => {
                 <div className="deploy-page__toolbar">
                     <div className={`deploy-hero__status${isEngaged ? ' deploy-hero__status--live' : ''}`} aria-live="polite">
                         <span className="deploy-hero__status-dot" aria-hidden />
-                        {isEngaged ? 'Override live' : 'Standby'}
+                        {isEngaged ? 'التحكم اليدوي نشط' : 'في وضع الاستعداد'}
                     </div>
                     <span title={engageTooltip}>
                         <button
@@ -415,7 +415,7 @@ const DeployRobot = () => {
                             data-tour="engage-btn"
                         >
                             <Zap size={16} fill={isEngaged ? 'currentColor' : 'none'} aria-hidden />
-                            <span>{isEngaged ? 'Engaged' : 'Engage'}</span>
+                            <span>{isEngaged ? 'قيد التشغيل' : 'تشغيل'}</span>
                         </button>
                     </span>
                 </div>
@@ -452,7 +452,7 @@ const DeployRobot = () => {
                     <Link2 size={15} className="deploy-metric__ico" aria-hidden />
                     <span className="deploy-metric__label">Link</span>
                     <span className="deploy-metric__value" style={{ color: linkColor }}>
-                        {robotConnected ? 'Confirmed' : 'Unconfirmed'}
+                        {robotConnected ? 'مؤكد' : 'غير مؤكد'}
                     </span>
                 </div>
             </div>
@@ -503,7 +503,7 @@ const DeployRobot = () => {
                             <CameraFeed
                                 ref={cameraFeedRef}
                                 showChrome={false}
-                                cameraLabel="Perimeter cam 01"
+                                cameraLabel="كاميرا المحيط 01"
                                 cameraZone="Gate lane"
                                 onMicActiveChange={setMicLive}
                             />
@@ -680,8 +680,8 @@ const DeployRobot = () => {
 
                     <div className="deploy-card deploy-speed-card">
                         <div className="deploy-speed-card__label">Speed profile</div>
-                        <div className="deploy-speed-seg" role="group" aria-label="Speed profile">
-                            {['slow', 'normal', 'turbo'].map((s) => (
+                        <div className="deploy-speed-seg" role="group" aria-label="ملف السرعة">
+                            {['بطيء', 'عادي', 'سريع جداً'].map((s) => (
                                 <button
                                     key={s}
                                     type="button"
@@ -723,7 +723,7 @@ const DeployRobot = () => {
                                     <div className="deploy-focus-card__title">Robot status</div>
                                     <div className="deploy-focus-stat">
                                         <span>Mode</span>
-                                        <strong>{isEngaged ? 'Manual override' : 'Standby'}</strong>
+                                        <strong>{isEngaged ? 'Manual override' : 'في وضع الاستعداد'}</strong>
                                     </div>
                                     <div className="deploy-focus-stat">
                                         <span>Signal</span>

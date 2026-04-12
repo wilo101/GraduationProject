@@ -437,7 +437,7 @@
     height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
-    background: #22c55e;
+    background: var(--status-good);
     animation: map-moving-blink-green 0.85s ease-in-out infinite;
 }
 

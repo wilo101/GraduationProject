@@ -10,15 +10,15 @@ const navItems = [
     { icon: Home, label: 'Overview', path: '/' },
     { icon: Map, label: 'Map', path: '/map-view' },
     { icon: Zap, label: 'Deploy', path: '/deploy' },
-    { icon: Shield, label: 'Diagnostics', path: '/diagnostics' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
+    { icon: Shield, label: 'فحص النظام', path: '/diagnostics' },
+    { icon: Settings, label: 'الإعدادات', path: '/settings' },
 ]
 
 export default function Sidebar() {
     const [estopOpen, setEstopOpen] = useState(false)
     const [lastEStopAt, setLastEStopAt] = useState(null)
 
-    const estopLabel = useMemo(() => 'Emergency Stop', [])
+    const estopLabel = useMemo(() => 'توقف طوارئ', [])
 
     useEffect(() => {
         const onKeyDown = (e) => {
@@ -39,7 +39,7 @@ export default function Sidebar() {
     return (
         <aside className="sidebar-dock" aria-label="Main navigation">
             <div className="sidebar-dock__mark">
-                <img src={logo} alt="Augustus OS" width={44} height={44} />
+                <img src={logo} alt="أوجوستوس" width={44} height={44} />
             </div>
 
             <div className="sidebar-dock__rule" aria-hidden />
