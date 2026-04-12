@@ -9,7 +9,7 @@ function getFullscreenElement() {
  * @param {{ showChrome?: boolean; style?: React.CSSProperties; className?: string; onMicActiveChange?: (on: boolean) => void; onFullscreenChange?: (on: boolean) => void; cameraLabel?: string; cameraZone?: string }} props
  */
 const CameraFeed = forwardRef(function CameraFeed(
-    { showChrome = true, style, className = '', onMicActiveChange, onFullscreenChange, cameraLabel = 'كاميرا المحيط 01', cameraZone = 'Live zone' },
+    { showChrome = true, style, className = '', onMicActiveChange, onFullscreenChange, cameraLabel = 'Perimeter cam 01', cameraZone = 'Live zone' },
     ref
 ) {
     const rootRef = useRef(null)

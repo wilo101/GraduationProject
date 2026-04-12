@@ -1,24 +1,26 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Home, Settings, Map, Zap, Shield } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import logo from '../assets/afr-logo.png'
 
 const ICON_STROKE = 1.65
 const ICON_SIZE = 22
 
-const navItems = [
-    { icon: Home, label: 'Overview', path: '/' },
-    { icon: Map, label: 'Map', path: '/map-view' },
-    { icon: Zap, label: 'Deploy', path: '/deploy' },
-    { icon: Shield, label: 'فحص النظام', path: '/diagnostics' },
-    { icon: Settings, label: 'الإعدادات', path: '/settings' },
-]
-
 export default function Sidebar() {
+    const { t } = useTranslation()
     const [estopOpen, setEstopOpen] = useState(false)
     const [lastEStopAt, setLastEStopAt] = useState(null)
 
-    const estopLabel = useMemo(() => 'توقف طوارئ', [])
+    const navItems = useMemo(() => [
+        { icon: Home, label: t('nav.overview'), path: '/' },
+        { icon: Map, label: t('nav.map'), path: '/map-view' },
+        { icon: Zap, label: t('nav.deploy'), path: '/deploy' },
+        { icon: Shield, label: t('nav.diagnostics'), path: '/diagnostics' },
+        { icon: Settings, label: t('nav.settings'), path: '/settings' },
+    ], [t])
+
+    const estopLabel = t('nav.estop')
 
     useEffect(() => {
         const onKeyDown = (e) => {
@@ -39,7 +41,7 @@ export default function Sidebar() {
     return (
         <aside className="sidebar-dock" aria-label="Main navigation">
             <div className="sidebar-dock__mark">
-                <img src={logo} alt="أوجوستوس" width={44} height={44} />
+                <img src={logo} alt="Augustus OS" width={44} height={44} />
             </div>
 
             <div className="sidebar-dock__rule" aria-hidden />
@@ -111,17 +113,17 @@ export default function Sidebar() {
                             <span className="sidebar-estop__modal-icon" aria-hidden>
                                 ⏹
                             </span>
-                            Confirm Emergency Stop
+                            {t('estop.title')}
                         </div>
                         <div className="sidebar-estop__modal-sub">
-                            This will immediately stop robot movement. Continue?
+                            {t('estop.message')}
                         </div>
                         <div className="sidebar-estop__modal-actions">
                             <button type="button" className="auth-social-btn" onClick={() => setEstopOpen(false)}>
-                                Cancel
+                                {t('estop.cancel')}
                             </button>
                             <button type="button" className="sidebar-estop__confirm" onClick={executeEStop}>
-                                Stop now
+                                {t('estop.confirm')}
                             </button>
                         </div>
                     </div>

@@ -344,7 +344,7 @@ export default function SystemDiagnostics() {
                                                         : t('diagnostics.item.ready')}
                                             </div>
                                         </div>
-                                        <div className="diag-right" aria-label="الحالة" style={{ gap: '0.5rem' }}>
+                                        <div className="diag-right" aria-label="Status" style={{ gap: '0.5rem' }}>
                                             {status === 'pass' || status === 'fail' ? (
                                                 <>
                                                     {status === 'fail' ? (

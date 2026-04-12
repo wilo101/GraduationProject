@@ -7,13 +7,12 @@ export function formatSupabaseAuthError(message) {
 
     if (lower.includes('rate limit') || lower.includes('too many')) {
         return (
-            'تم تجاوز حد إرسال الإيميل مؤقتًا (حد من Supabase). جرّب بعد نحو ساعة، أو من لوحة Supabase: Authentication → Providers → Email عطّل "Confirm email" أثناء التجربة، أو أضف Custom SMTP في إعدادات المشروع لرفع الحد. ' +
-            '— Email rate limit exceeded: wait ~1 hour, turn off email confirmation for testing, or add custom SMTP in Supabase.'
+            'Email rate limit exceeded. Wait about an hour, or in Supabase: Authentication → Providers → Email turn off “Confirm email” for testing, or add Custom SMTP to raise the limit.'
         )
     }
 
     if (lower.includes('already registered') || lower.includes('user already')) {
-        return 'يوجد حساب بهذا البريد بالفعل. جرّب تسجيل الدخول. — An account with this email already exists. Try signing in.'
+        return 'An account with this email already exists. Try signing in.'
     }
 
     return message

@@ -17,17 +17,19 @@ import {
     AlertTriangle,
     X,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import CameraFeed from '../components/CameraFeed';
 import '../styles/deploy-control.css';
 
 const TRAVEL_PX = 28; // medium stick: (128 - 56) / 2
 
 const DeployRobot = () => {
+    const { t } = useTranslation()
     const [isEngaged, setIsEngaged] = useState(false);
     const [stick, setStick] = useState({ x: 0, y: 0 });
     const [dpad, setDpad] = useState({ up: false, down: false, left: false, right: false });
     const [lastCmd, setLastCmd] = useState('idle');
-    const [speed, setSpeed] = useState('عادي');
+    const [speed, setSpeed] = useState('normal');
     const [latencyMs, setLatencyMs] = useState(24);
     const [packetLoss, setPacketLoss] = useState(0);
     const [commandLog, setCommandLog] = useState([]);
@@ -63,7 +65,7 @@ const DeployRobot = () => {
 
     const focusCameras = useMemo(
         () => [
-            { id: 'cam-01', name: 'كاميرا المحيط 01', zone: 'Gate lane', health: 'stable' },
+            { id: 'cam-01', name: 'Perimeter cam 01', zone: 'Gate lane', health: 'stable' },
             { id: 'cam-02', name: 'Thermal cam 02', zone: 'Storage north', health: 'warning' },
             { id: 'cam-03', name: 'Dock cam 03', zone: 'Loading dock', health: 'stable' },
             { id: 'cam-04', name: 'Aerial relay 04', zone: 'Access road', health: 'stable' },
@@ -77,7 +79,7 @@ const DeployRobot = () => {
     };
 
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-    const speedScale = speed === 'بطيء' ? 0.45 : speed === 'سريع جداً' ? 1.25 : 0.85;
+    const speedScale = speed === 'slow' ? 0.45 : speed === 'fast' ? 1.25 : 0.85;
 
     const stickMag = useMemo(() => Math.min(1, Math.hypot(stick.x, stick.y)), [stick]);
     const liveSpeedMs = useMemo(() => Number((stickMag * 1.8 * speedScale).toFixed(2)), [stickMag, speedScale]);
@@ -230,7 +232,7 @@ const DeployRobot = () => {
     }, [latencyMs, packetLoss]);
 
     const canEngage = robotConnected && latencyMs < 100 && linkState.label === 'STRONG';
-    const engageTooltip = canEngage ? 'Ready to engage' : 'Cannot engage — connection not confirmed';
+    const engageTooltip = canEngage ? t('deploy.tooltip_ready') : t('deploy.tooltip_disabled');
 
     const latencyBad = latencyMs > 100;
     const latencyWarn = latencyMs > 70 && latencyMs <= 100;
@@ -394,16 +396,16 @@ const DeployRobot = () => {
         <div className="fade-in deploy-page ops-page-wrap">
             <header className="deploy-page__header">
                 <div className="deploy-page__intro">
-                    <span className="deploy-hero__kicker">Remote operations · Direct control</span>
-                    <h1 className="deploy-hero__title">Manual Override</h1>
+                    <span className="deploy-hero__kicker">{t('deploy.kicker')}</span>
+                    <h1 className="deploy-hero__title">{t('deploy.title')}</h1>
                     <p className="deploy-hero__lede">
-                        Drive vector and fine adjust when autonomy is suspended. Engage only after link health is confirmed.
+                        {t('deploy.lede')}
                     </p>
                 </div>
                 <div className="deploy-page__toolbar">
                     <div className={`deploy-hero__status${isEngaged ? ' deploy-hero__status--live' : ''}`} aria-live="polite">
                         <span className="deploy-hero__status-dot" aria-hidden />
-                        {isEngaged ? 'التحكم اليدوي نشط' : 'في وضع الاستعداد'}
+                        {isEngaged ? t('deploy.status_active') : t('deploy.status_standby')}
                     </div>
                     <span title={engageTooltip}>
                         <button
@@ -415,7 +417,7 @@ const DeployRobot = () => {
                             data-tour="engage-btn"
                         >
                             <Zap size={16} fill={isEngaged ? 'currentColor' : 'none'} aria-hidden />
-                            <span>{isEngaged ? 'قيد التشغيل' : 'تشغيل'}</span>
+                            <span>{isEngaged ? t('deploy.engaged') : t('deploy.engage')}</span>
                         </button>
                     </span>
                 </div>
@@ -427,15 +429,15 @@ const DeployRobot = () => {
             <div className="deploy-conn-strip" role="status" aria-label="Connection status">
                 <div className="deploy-metric">
                     <Activity size={15} className="deploy-metric__ico" aria-hidden />
-                    <span className="deploy-metric__label">Latency</span>
+                    <span className="deploy-metric__label">{t('deploy.metrics.latency')}</span>
                     <span className="deploy-metric__value" style={{ color: latencyColor }}>
                         {latencyMs}
-                        <span className="deploy-metric__unit">ms</span>
+                        <span className="deploy-metric__unit">{t('deploy.metrics.ms')}</span>
                     </span>
                 </div>
                 <div className="deploy-metric">
                     <Wifi size={15} className="deploy-metric__ico" aria-hidden />
-                    <span className="deploy-metric__label">Loss</span>
+                    <span className="deploy-metric__label">{t('deploy.metrics.loss')}</span>
                     <span className="deploy-metric__value" style={{ color: lossColor }}>
                         {packetLoss.toFixed(1)}
                         <span className="deploy-metric__unit">%</span>
@@ -443,16 +445,16 @@ const DeployRobot = () => {
                 </div>
                 <div className="deploy-metric">
                     <Radio size={15} className="deploy-metric__ico" aria-hidden />
-                    <span className="deploy-metric__label">Signal</span>
+                    <span className="deploy-metric__label">{t('deploy.metrics.signal')}</span>
                     <span className="deploy-metric__value" style={{ color: signalColor }}>
                         {linkState.label}
                     </span>
                 </div>
                 <div className="deploy-metric">
                     <Link2 size={15} className="deploy-metric__ico" aria-hidden />
-                    <span className="deploy-metric__label">Link</span>
+                    <span className="deploy-metric__label">{t('deploy.metrics.link')}</span>
                     <span className="deploy-metric__value" style={{ color: linkColor }}>
-                        {robotConnected ? 'مؤكد' : 'غير مؤكد'}
+                        {robotConnected ? t('deploy.metrics.link_confirmed') : t('deploy.metrics.link_unconfirmed')}
                     </span>
                 </div>
             </div>
@@ -464,7 +466,7 @@ const DeployRobot = () => {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
                                 <span className="deploy-feed-online__live" aria-label="Live">
                                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444' }} aria-hidden />
-                                    LIVE
+                                    {t('deploy.feed.live')}
                                 </span>
                                 <span className="deploy-feed-online__cam-label">Perimeter cam 01</span>
                             </div>
@@ -503,7 +505,7 @@ const DeployRobot = () => {
                             <CameraFeed
                                 ref={cameraFeedRef}
                                 showChrome={false}
-                                cameraLabel="كاميرا المحيط 01"
+                                cameraLabel="Perimeter cam 01"
                                 cameraZone="Gate lane"
                                 onMicActiveChange={setMicLive}
                             />
@@ -513,10 +515,10 @@ const DeployRobot = () => {
                     <div className="deploy-feed-offline">
                         <Video size={18} aria-hidden className="deploy-feed-offline__ico" />
                         <span className="deploy-feed-offline__text">
-                            Camera unavailable · last seen {lastSeenMinutes}m ago
+                            {t('deploy.feed.unavailable')} {lastSeenMinutes}m ago
                         </span>
                         <button type="button" className="auth-social-btn" onClick={onFeedRetry} style={{ width: 'auto', padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}>
-                            Retry
+                            {t('deploy.feed.retry')}
                         </button>
                     </div>
                 )}
@@ -525,7 +527,7 @@ const DeployRobot = () => {
             <section className="deploy-control-deck" aria-label="Manual control surfaces">
                 <div className="deploy-deck__rail" aria-hidden>
                     <Crosshair size={14} aria-hidden />
-                    <span>Control deck</span>
+                    <span>{t('deploy.controls.deck')}</span>
                 </div>
 
                 <div className="deploy-controls-grid">
@@ -573,7 +575,7 @@ const DeployRobot = () => {
                             aria-hidden
                         />
                     </div>
-                    <div className="mo-label">Drive</div>
+                    <div className="mo-label">{t('deploy.controls.drive')}</div>
                     <p className="deploy-vector-readout">
                         x={stick.x.toFixed(2)} y={(-stick.y).toFixed(2)}
                     </p>
@@ -582,19 +584,19 @@ const DeployRobot = () => {
                 <div className="deploy-col deploy-col--telemetry">
                     <div className="deploy-card deploy-tel-card">
                         <div className="deploy-tel-card__header">
-                            <span className="deploy-tel-card__title">Telemetry</span>
-                            <span className="deploy-tel-card__badge">Live</span>
+                            <span className="deploy-tel-card__title">{t('deploy.controls.telemetry')}</span>
+                            <span className="deploy-tel-card__badge">{t('deploy.controls.live')}</span>
                         </div>
                         <div className="deploy-tel-card__grid">
                             <div className="deploy-tel-stat">
-                                <span className="deploy-tel-stat__label">Speed</span>
+                                <span className="deploy-tel-stat__label">{t('deploy.controls.speed')}</span>
                                 <span className="deploy-tel-stat__value">
                                     {liveSpeedMs.toFixed(2)}
                                     <span className="deploy-tel-stat__unit">m/s</span>
                                 </span>
                             </div>
                             <div className="deploy-tel-stat deploy-tel-stat--heading">
-                                <span className="deploy-tel-stat__label">Heading</span>
+                                <span className="deploy-tel-stat__label">{t('deploy.controls.heading')}</span>
                                 <span className="deploy-tel-stat__value deploy-tel-stat__value--deg">
                                     {headingDeg}
                                     <span className="deploy-tel-stat__unit">°</span>
@@ -602,7 +604,7 @@ const DeployRobot = () => {
                             </div>
                         </div>
                         <div className="deploy-tel-card__section">
-                            <span className="deploy-tel-card__section-label">Movement log</span>
+                            <span className="deploy-tel-card__section-label">{t('deploy.controls.movement_log')}</span>
                             <div className="deploy-log">
                                 {[0, 1, 2].map((i) => (
                                     <div key={i} className="deploy-log__row">
@@ -676,19 +678,23 @@ const DeployRobot = () => {
                             <div className="mo-dpad-center" aria-hidden />
                         </div>
                     </div>
-                    <div className="mo-label">Adjust</div>
+                    <div className="mo-label">{t('deploy.controls.adjust')}</div>
 
                     <div className="deploy-card deploy-speed-card">
-                        <div className="deploy-speed-card__label">Speed profile</div>
-                        <div className="deploy-speed-seg" role="group" aria-label="ملف السرعة">
-                            {['بطيء', 'عادي', 'سريع جداً'].map((s) => (
+                        <div className="deploy-speed-card__label">{t('deploy.controls.speed_profile')}</div>
+                        <div className="deploy-speed-seg" role="group" aria-label="Speed profile">
+                            {[
+                                { id: 'slow', label: t('deploy.controls.speeds.slow') },
+                                { id: 'normal', label: t('deploy.controls.speeds.normal') },
+                                { id: 'fast', label: t('deploy.controls.speeds.fast') }
+                            ].map((s) => (
                                 <button
-                                    key={s}
+                                    key={s.id}
                                     type="button"
-                                    className={`deploy-speed-btn${speed === s ? ' deploy-speed-btn--active' : ''}`}
-                                    onClick={() => setSpeed(s)}
+                                    className={`deploy-speed-btn${speed === s.id ? ' deploy-speed-btn--active' : ''}`}
+                                    onClick={() => setSpeed(s.id)}
                                 >
-                                    {s}
+                                    {s.label}
                                 </button>
                             ))}
                         </div>
@@ -704,13 +710,13 @@ const DeployRobot = () => {
                     <div className="deploy-focus-shell">
                         <header className="deploy-focus-header">
                             <div>
-                                <span className="deploy-focus-kicker">Focused monitoring mode</span>
+                                <span className="deploy-focus-kicker">{t('deploy.focus.kicker')}</span>
                                 <h2 className="deploy-focus-title">{activeFocusCamera.name}</h2>
                                 <p className="deploy-focus-sub">Live follow-up on {activeFocusCamera.zone}</p>
                             </div>
                             <button type="button" className="auth-social-btn deploy-focus-close" onClick={closeFocusMode}>
                                 <X size={17} aria-hidden />
-                                Close focus
+                                {t('deploy.focus.close')}
                             </button>
                         </header>
 
@@ -720,33 +726,33 @@ const DeployRobot = () => {
                             </div>
                             <aside className="deploy-focus-side">
                                 <div className="deploy-focus-card">
-                                    <div className="deploy-focus-card__title">Robot status</div>
+                                    <div className="deploy-focus-card__title">{t('deploy.focus.robot_status')}</div>
                                     <div className="deploy-focus-stat">
-                                        <span>Mode</span>
-                                        <strong>{isEngaged ? 'Manual override' : 'في وضع الاستعداد'}</strong>
+                                        <span>{t('deploy.focus.mode')}</span>
+                                        <strong>{isEngaged ? t('deploy.status_active') : t('deploy.status_standby')}</strong>
                                     </div>
                                     <div className="deploy-focus-stat">
-                                        <span>Signal</span>
+                                        <span>{t('deploy.metrics.signal')}</span>
                                         <strong>{linkState.label}</strong>
                                     </div>
                                     <div className="deploy-focus-stat">
-                                        <span>Latency</span>
-                                        <strong>{latencyMs} ms</strong>
+                                        <span>{t('deploy.metrics.latency')}</span>
+                                        <strong>{latencyMs} {t('deploy.metrics.ms')}</strong>
                                     </div>
                                     <div className="deploy-focus-stat">
-                                        <span>Packet loss</span>
+                                        <span>{t('deploy.metrics.loss')}</span>
                                         <strong>{packetLoss.toFixed(1)}%</strong>
                                     </div>
                                 </div>
 
                                 <div className={`deploy-focus-card deploy-focus-card--alert${alertPulse ? ' deploy-focus-card--alerting' : ''}`}>
-                                    <div className="deploy-focus-card__title">Operator actions</div>
+                                    <div className="deploy-focus-card__title">{t('deploy.focus.operator_actions')}</div>
                                     <button type="button" className="deploy-focus-alert-btn" onClick={sendRobotAlert}>
                                         <AlertTriangle size={16} aria-hidden />
-                                        Send robot alert
+                                        {t('deploy.focus.send_alert')}
                                     </button>
                                     <button type="button" className="auth-social-btn" onClick={() => setIsEngaged(false)} style={{ width: '100%' }}>
-                                        Force standby
+                                        {t('deploy.focus.force_standby')}
                                     </button>
                                 </div>
                             </aside>
@@ -777,12 +783,12 @@ const DeployRobot = () => {
             <div className="deploy-shortcuts-pill">
                 <button type="button" className="deploy-shortcuts-pill__btn" onClick={() => setShowShortcuts((v) => !v)} aria-expanded={showShortcuts}>
                     <Keyboard size={15} aria-hidden className="deploy-shortcuts-pill__kbd" />
-                    <span>↑↓←→ or WASD · Space stop · Esc disengage</span>
+                    <span>{t('deploy.shortcuts.label')}</span>
                     <span aria-hidden>{showShortcuts ? '▴' : '▾'}</span>
                 </button>
                 {showShortcuts ? (
                     <div className="deploy-shortcuts-pill__expand" role="region" aria-label="Keyboard shortcuts detail">
-                        Arrow keys adjust the D-pad. WASD drives the analog stick. Space stops motion. Escape disengages and stops.
+                        {t('deploy.shortcuts.detail')}
                     </div>
                 ) : null}
             </div>
