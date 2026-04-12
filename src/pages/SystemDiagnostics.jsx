@@ -13,17 +13,21 @@ import {
     ShieldCheck,
     Printer,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
-const systemsSeed = [
-    { id: 1, name: 'Core Processor', icon: Cpu },
-    { id: 2, name: 'Sensor Array', icon: Activity },
-    { id: 3, name: 'Motor Systems', icon: Cog },
-    { id: 4, name: 'Optical Cameras', icon: Eye },
-    { id: 5, name: 'Wireless Uplink', icon: Wifi },
-    { id: 6, name: 'Power Cells', icon: Battery },
+const getSystemsSeed = (t) => [
+    { id: 1, name: t('diagnostics.systems.core'), icon: Cpu },
+    { id: 2, name: t('diagnostics.systems.sensors'), icon: Activity },
+    { id: 3, name: t('diagnostics.systems.motors'), icon: Cog },
+    { id: 4, name: t('diagnostics.systems.cameras'), icon: Eye },
+    { id: 5, name: t('diagnostics.systems.wifi'), icon: Wifi },
+    { id: 6, name: t('diagnostics.systems.power'), icon: Battery },
 ]
 
 export default function SystemDiagnostics() {
+    const { t } = useTranslation();
+    const systemsSeed = useMemo(() => getSystemsSeed(t), [t]);
+    
     const [activeItem, setActiveItem] = useState(0)
     const [running, setRunning] = useState(false)
     const [lastRunAt, setLastRunAt] = useState(null)
@@ -42,8 +46,10 @@ export default function SystemDiagnostics() {
     const eta = useMemo(() => {
         if (!running) return null
         const remaining = Math.max(0, systemsSeed.length - activeItem)
-        return `${remaining * 0.8}s`
-    }, [running, activeItem])
+        // Avoid float jitter (e.g. 4.800000000000001) that stretches KPI tiles
+        const seconds = Number((remaining * 0.8).toFixed(1))
+        return `${seconds}s`
+    }, [running, activeItem, systemsSeed.length])
 
     const overallResult = useMemo(() => {
         if (!complete) return '—'
@@ -55,11 +61,11 @@ export default function SystemDiagnostics() {
     const failCount = useMemo(() => results.filter((r) => r.status === 'fail').length, [results])
 
     const subsystemSummaryText = useMemo(() => {
-        if (running) return 'Live analysis in progress…'
-        if (!complete) return 'Press Run all or Test on a subsystem.'
+        if (running) return t('diagnostics.summary.live')
+        if (!complete) return t('diagnostics.summary.idle')
         if (failCount > 0) return `${failCount} failed · ${passCount} passed — action required`
-        return 'All subsystems nominal.'
-    }, [running, complete, failCount, passCount])
+        return t('diagnostics.summary.nominal')
+    }, [running, complete, failCount, passCount, t])
 
     const reportDocId = useMemo(() => {
         if (!lastRunAt) return '—'
@@ -206,10 +212,10 @@ export default function SystemDiagnostics() {
         <div className="fade-in diag-page ops-page-wrap">
             <header className="diag-hero">
                 <div>
-                    <h1 className="diag-h1">System Diagnostics</h1>
+                    <h1 className="diag-h1">{t('diagnostics.title')}</h1>
                     <p className="diag-sub">
-                        Run a guided integrity check across hardware + software subsystems. Diagnostics start <bdi>only</bdi> when you click{' '}
-                        <bdi>Start test</bdi>.
+                        {t('diagnostics.description')} <bdi>only</bdi> when you click{' '}
+                        <bdi>{t('diagnostics.description_bold')}</bdi>.
                     </p>
                 </div>
 
@@ -222,7 +228,7 @@ export default function SystemDiagnostics() {
                         style={{ width: 'auto', padding: '0.9rem 1.15rem' }}
                     >
                         <Play size={18} aria-hidden />
-                        {running ? 'Running…' : 'Run all'}
+                        {running ? t('diagnostics.actions.running') : t('diagnostics.actions.run_all')}
                     </button>
                     <button
                         className="auth-social-btn"
@@ -232,7 +238,7 @@ export default function SystemDiagnostics() {
                         style={{ width: 'auto', padding: '0.9rem 1.15rem', opacity: running ? 1 : 0.55 }}
                     >
                         <XCircle size={18} aria-hidden />
-                        Stop
+                        {t('diagnostics.actions.stop')}
                     </button>
                     <button
                         className="auth-social-btn"
@@ -243,7 +249,7 @@ export default function SystemDiagnostics() {
                         aria-label="Print diagnostics report"
                     >
                         <Printer size={18} aria-hidden />
-                        Export Report
+                        {t('diagnostics.actions.export')}
                     </button>
                 </div>
             </header>
@@ -255,10 +261,10 @@ export default function SystemDiagnostics() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <span className="diag-status-chip">
                             <span className={`diag-dot${running ? ' diag-dot--running' : ''}`} aria-hidden />
-                            {running ? 'Running diagnostics' : complete ? 'Diagnostics complete' : 'Ready'}
+                            {running ? t('diagnostics.status.running') : complete ? t('diagnostics.status.complete') : t('diagnostics.status.ready')}
                         </span>
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            {lastRunAt ? `Last run: ${lastRunAt.toLocaleString()}` : 'No runs yet'}
+                            {lastRunAt ? `${t('diagnostics.status.last_run')}${lastRunAt.toLocaleString()}` : t('diagnostics.status.no_runs')}
                         </div>
                     </div>
 
@@ -266,28 +272,28 @@ export default function SystemDiagnostics() {
                         <div className="diag-ring" aria-label="Progress ring">
                             <div className="diag-ring-inner">
                                 <div className="diag-progress">{progress}%</div>
-                                <div className="diag-progress-sub">{running ? 'SCANNING' : complete ? 'COMPLETE' : 'IDLE'}</div>
+                                <div className="diag-progress-sub">{running ? t('diagnostics.status.scanning') : complete ? t('diagnostics.status.complete').toUpperCase() : t('diagnostics.status.idle')}</div>
                             </div>
                         </div>
                     </div>
 
                     <div className="diag-kpis">
                         <div className="diag-kpi">
-                            <div className="diag-kpi-label">Subsystems</div>
+                            <div className="diag-kpi-label">{t('diagnostics.kpi.subsystems')}</div>
                             <div className="diag-kpi-value">
                                 {Math.min(activeItem, systemsSeed.length)}/{systemsSeed.length}
                             </div>
                         </div>
                         <div className="diag-kpi">
-                            <div className="diag-kpi-label">ETA</div>
+                            <div className="diag-kpi-label">{t('diagnostics.kpi.eta')}</div>
                             <div className="diag-kpi-value">{eta || '—'}</div>
                         </div>
                         <div className="diag-kpi">
-                            <div className="diag-kpi-label">Mode</div>
+                            <div className="diag-kpi-label">{t('diagnostics.kpi.mode')}</div>
                             <div className="diag-kpi-value">{running ? (mode === 'single' ? 'single' : 'all') : 'idle'}</div>
                         </div>
                         <div className="diag-kpi">
-                            <div className="diag-kpi-label">Result</div>
+                            <div className="diag-kpi-label">{t('diagnostics.kpi.result')}</div>
                             <div className="diag-kpi-value">{complete ? overallResult : '—'}</div>
                         </div>
                     </div>
@@ -295,7 +301,7 @@ export default function SystemDiagnostics() {
 
                 <section className="glass-panel diag-card" aria-label="Subsystem results">
                     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.9rem' }}>
-                        <div style={{ fontWeight: 800, fontFamily: 'var(--font-heading)' }}>Subsystem results</div>
+                        <div style={{ fontWeight: 800, fontFamily: 'var(--font-heading)' }}>{t('diagnostics.results_title')}</div>
                         <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', textAlign: 'end' }}>{subsystemSummaryText}</div>
                     </div>
 
@@ -330,12 +336,12 @@ export default function SystemDiagnostics() {
                                             <div className="diag-item-name">{sys.name}</div>
                                             <div className="diag-item-sub">
                                                 {status === 'pass'
-                                                    ? 'Operational'
+                                                    ? t('diagnostics.item.operational')
                                                     : status === 'fail'
-                                                      ? 'Failure detected — action required'
+                                                      ? t('diagnostics.item.failure')
                                                       : status === 'live'
-                                                        ? 'Analyzing…'
-                                                        : 'Ready'}
+                                                        ? t('diagnostics.item.analyzing')
+                                                        : t('diagnostics.item.ready')}
                                             </div>
                                         </div>
                                         <div className="diag-right" aria-label="الحالة" style={{ gap: '0.5rem' }}>
@@ -346,12 +352,12 @@ export default function SystemDiagnostics() {
                                                     ) : (
                                                         <CheckCircle size={18} color="#2dd4bf" aria-hidden />
                                                     )}
-                                                    {status === 'fail' ? 'fail' : 'pass'}
+                                                    {status === 'fail' ? t('diagnostics.item.fail') : t('diagnostics.item.pass')}
                                                 </>
                                             ) : status === 'live' ? (
                                                 <>
                                                     <span className="diag-spin" aria-hidden />
-                                                    live
+                                                    {t('diagnostics.item.live')}
                                                 </>
                                             ) : (
                                                 <>
@@ -362,7 +368,7 @@ export default function SystemDiagnostics() {
                                                         onClick={() => startSingle(sys.id)}
                                                         style={{ width: 'auto', padding: '0.55rem 0.75rem', opacity: canTest ? 1 : 0.55 }}
                                                     >
-                                                        Test
+                                                        {t('diagnostics.item.test')}
                                                     </button>
                                                 </>
                                             )}
@@ -371,7 +377,7 @@ export default function SystemDiagnostics() {
                                     {status === 'fail' ? (
                                         <div className="glass-card diag-error-detail" style={{ marginTop: '0.45rem', padding: '0.75rem 0.9rem', borderRadius: 12 }}>
                                             <div className="diag-error-detail__code">
-                                                Error code: {r?.errorCode || '—'}
+                                                {t('diagnostics.item.error_code')} {r?.errorCode || '—'}
                                             </div>
                                             {expandedRows[sys.id] ? (
                                                 <div className="diag-error-detail__msg">
@@ -385,7 +391,7 @@ export default function SystemDiagnostics() {
                                                     onClick={() => setExpandedRows((cur) => ({ ...cur, [sys.id]: !cur[sys.id] }))}
                                                     style={{ width: 'auto', padding: '0.45rem 0.65rem' }}
                                                 >
-                                                    {expandedRows[sys.id] ? 'Hide details' : 'Show details'}
+                                                    {expandedRows[sys.id] ? t('diagnostics.item.hide_details') : t('diagnostics.item.show_details')}
                                                 </button>
                                                 <button
                                                     type="button"
@@ -394,7 +400,7 @@ export default function SystemDiagnostics() {
                                                     onClick={() => startSingle(sys.id)}
                                                     style={{ width: 'auto', padding: '0.45rem 0.65rem' }}
                                                 >
-                                                    Retry
+                                                    {t('diagnostics.item.retry')}
                                                 </button>
                                             </div>
                                         </div>

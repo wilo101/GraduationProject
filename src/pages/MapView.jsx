@@ -1,6 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Layers, LocateFixed, Minus, Navigation, Plus, Search, Wind } from 'lucide-react'
+import {
+    Battery,
+    BatteryFull,
+    BatteryLow,
+    BatteryMedium,
+    Layers,
+    LocateFixed,
+    Minus,
+    Navigation,
+    Plus,
+    Search,
+    Wind,
+} from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import HouseMap from '../components/HouseMap'
 import '../styles/map-view.css'
 
@@ -8,36 +21,44 @@ import '../styles/map-view.css'
 const SITE_GPS_ORIGIN = { lat: 30.04442, lng: 31.23572 }
 const SITE_GPS_SPAN = { lat: 0.012, lng: 0.012 }
 
+/** Battery level icon (no text label) for map chrome */
+function MapBatteryGlyph({ pct, className, size = 15 }) {
+    const p = Math.max(0, Math.min(100, Math.round(Number(pct))))
+    const Icon = p <= 18 ? BatteryLow : p <= 52 ? Battery : p <= 82 ? BatteryMedium : BatteryFull
+    return <Icon size={size} className={className} aria-hidden />
+}
+
 function formatCoord(n, isLat) {
     const abs = Math.abs(n)
     const dir = isLat ? (n >= 0 ? 'N' : 'S') : n >= 0 ? 'E' : 'W'
     return `${abs.toFixed(5)}° ${dir}`
 }
 
-/** Demo zones for outdoor / facility operations (matches HouseMap layout ids). */
-const zonesSeed = [
-    { id: 'yard', name: 'Main yard', status: 'clear', lastScan: '2m ago' },
-    { id: 'loading', name: 'Loading dock', status: 'low risk', lastScan: '9m ago' },
-    { id: 'access', name: 'Access road', status: 'clear', lastScan: '15m ago' },
-    { id: 'storage', name: 'Storage yard', status: 'needs scan', lastScan: '1h ago' },
+const getZonesSeed = (t) => [
+    { id: 'yard', name: t('map.zones.yard'), status: 'clear', lastScan: t('map.time.ago_2m') },
+    { id: 'loading', name: t('map.zones.loading'), status: 'low risk', lastScan: t('map.time.ago_9m') },
+    { id: 'access', name: t('map.zones.access'), status: 'clear', lastScan: t('map.time.ago_15m') },
+    { id: 'storage', name: t('map.zones.storage'), status: 'needs scan', lastScan: t('map.time.ago_1h') },
 ]
 
-function statusBadge(status) {
+function statusBadge(status, t) {
     if (status === 'clear') {
         return {
-            text: 'ZONE CLEAR',
+            text: t('map.sidebar.status.clear'),
             bg: 'var(--status-clear-bg, rgba(13, 148, 136, 0.12))',
             brd: 'var(--status-clear-brd, rgba(13, 148, 136, 0.22))',
             fg: 'var(--status-clear-fg, rgba(45, 212, 191, 0.95))',
         }
     }
     if (status === 'low risk') {
-        return { text: 'LOW RISK', bg: 'var(--status-warn-bg, rgba(212, 160, 23, 0.12))', brd: 'var(--status-warn-brd, rgba(212, 160, 23, 0.22))', fg: 'var(--status-warn-fg, rgba(252, 211, 77, 0.95))' }
+        return { text: t('map.sidebar.status.low_risk'), bg: 'var(--status-warn-bg, rgba(212, 160, 23, 0.12))', brd: 'var(--status-warn-brd, rgba(212, 160, 23, 0.22))', fg: 'var(--status-warn-fg, rgba(252, 211, 77, 0.95))' }
     }
-    return { text: 'NEEDS SCAN', bg: 'var(--status-crit-bg, rgba(239, 68, 68, 0.12))', brd: 'var(--status-crit-brd, rgba(239, 68, 68, 0.22))', fg: 'var(--status-crit-fg, rgba(248, 113, 113, 0.95))' }
+    return { text: t('map.sidebar.status.needs_scan'), bg: 'var(--status-crit-bg, rgba(239, 68, 68, 0.12))', brd: 'var(--status-crit-brd, rgba(239, 68, 68, 0.22))', fg: 'var(--status-crit-fg, rgba(248, 113, 113, 0.95))' }
 }
 
 export default function MapView() {
+    const { t } = useTranslation()
+    const zonesSeedLoaded = useMemo(() => getZonesSeed(t), [t])
     const [query, setQuery] = useState('')
     const [selected, setSelected] = useState(null)
     const [flashZoneId, setFlashZoneId] = useState(null)
@@ -84,18 +105,18 @@ export default function MapView() {
 
     const zones = useMemo(() => {
         const q = query.trim().toLowerCase()
-        const base = zonesSeed.map((z) => ({
+        const base = zonesSeedLoaded.map((z) => ({
             ...z,
             ...(zoneMeta[z.id] || {}),
         }))
         if (!q) return base
         return base.filter((z) => z.name.toLowerCase().includes(q))
-    }, [query, zoneMeta])
+    }, [query, zoneMeta, zonesSeedLoaded])
 
     const robotMeta = useMemo(() => {
-        const z = zonesSeed.find((x) => x.id === robotZoneId) || zonesSeed[0]
+        const z = zonesSeedLoaded.find((x) => x.id === robotZoneId) || zonesSeedLoaded[0]
         return { ...z, ...(zoneMeta[z.id] || {}) }
-    }, [robotZoneId, zoneMeta])
+    }, [robotZoneId, zoneMeta, zonesSeedLoaded])
 
     const handleMapMissionComplete = useCallback((detail) => {
         setMapMission((cur) => (cur && cur.token === detail.token ? null : cur))
@@ -104,11 +125,11 @@ export default function MapView() {
                 ...m,
                 [detail.zoneId]: {
                     status: 'clear',
-                    lastScan: 'Just now',
+                    lastScan: t('map.time.just_now'),
                 },
             }))
         }
-    }, [])
+    }, [t])
 
     const sendNavigationCommand = useCallback((zone, action = 'navigate') => {
         const token = Date.now()
@@ -119,7 +140,7 @@ export default function MapView() {
             at: new Date().toISOString(),
         }
         window.dispatchEvent(new CustomEvent('robot:navigate', { detail: payload }))
-        const msg = action === 'scan' ? `Scanning ${zone.name}…` : `Routing to ${zone.name}…`
+        const msg = action === 'scan' ? t('map.nav.scanning', { name: zone.name }) : t('map.nav.routing', { name: zone.name })
         setSelected(zone.id)
         setFlashZoneId(zone.id)
         window.clearTimeout(flashClearRef.current)
@@ -127,7 +148,7 @@ export default function MapView() {
         setMapMission({ zoneId: zone.id, action, token })
         setNavToast(msg)
         window.setTimeout(() => setNavToast(null), action === 'scan' ? 3200 : 4200)
-    }, [])
+    }, [t])
 
     const onTelemetry = useCallback(({ robotZoneId: id, isMoving }) => {
         setRobotZoneId(id)
@@ -210,10 +231,10 @@ export default function MapView() {
                             fontFamily: 'var(--font-heading)',
                         }}
                     >
-                        Map
+                        {t('map.title')}
                     </h1>
                     <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', maxWidth: '52ch', lineHeight: 1.45, margin: 0 }}>
-                        Outdoor site map — zones, patrol coverage, and robot position for your organization.
+                        {t('map.description')}
                     </p>
                 </div>
 
@@ -234,12 +255,12 @@ export default function MapView() {
                         {layersOpen ? (
                             <div ref={layersDropdownRef} className="map-layers-dropdown" role="menu">
                                 {[
-                                    ['grid', 'Grid'],
-                                    ['labels', 'Zone labels'],
-                                    ['robot', 'Robot marker'],
-                                    ['pathHistory', 'Path history'],
-                                    ['wind', 'Wind field'],
-                                    ['sensors', 'Sensors'],
+                                    ['grid', t('map.layers.grid')],
+                                    ['labels', t('map.layers.labels')],
+                                    ['robot', t('map.layers.robot')],
+                                    ['pathHistory', t('map.layers.pathHistory')],
+                                    ['wind', t('map.layers.wind')],
+                                    ['sensors', t('map.layers.sensors')],
                                 ].map(([key, label]) => (
                                     <label key={key}>
                                         <span>{label}</span>
@@ -261,7 +282,7 @@ export default function MapView() {
                         onClick={centerOnRobot}
                     >
                         <LocateFixed size={18} aria-hidden />
-                        Center robot
+                        {t('map.toolbar.center')}
                     </button>
                 </div>
             </header>
@@ -271,10 +292,14 @@ export default function MapView() {
                 <div className="map-env-strip" aria-label="Environmental overlay summary">
                     <span className="map-env-strip__item">
                         <Wind className="map-env-strip__ico" size={15} aria-hidden />
-                        Wind {windEnv.speedKmh} km/h · downwind bearing {windEnv.degFromNorth}°
+                        {t('map.env.wind', { speed: windEnv.speedKmh, heading: windEnv.degFromNorth })}
                     </span>
-                    <span className="map-env-strip__item">
-                        Battery {batteryPct.toFixed(batteryPct % 1 === 0 ? 0 : 1)}%
+                    <span
+                        className="map-env-strip__item map-env-strip__item--battery"
+                        aria-label={`${t('map.env.battery')} ${batteryPct.toFixed(batteryPct % 1 === 0 ? 0 : 1)}%`}
+                    >
+                        <MapBatteryGlyph pct={batteryPct} className="map-env-strip__ico map-env-strip__battery-ico" />
+                        <span>{batteryPct.toFixed(batteryPct % 1 === 0 ? 0 : 1)}%</span>
                     </span>
                 </div>
 
@@ -283,19 +308,19 @@ export default function MapView() {
                     <div className="map-sidebar__search">
                         <div className="auth-input-wrap" style={{ margin: 0 }}>
                             <Search className="auth-icon" size={18} aria-hidden />
-                            <input
+                                <input
                                 className="auth-input"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Search zones…"
-                                aria-label="Search zones"
+                                placeholder={t('map.sidebar.search')}
+                                aria-label={t('map.sidebar.search')}
                             />
                         </div>
                     </div>
 
                     <div className="map-sidebar__list" aria-label="Zones">
                         {zones.map((r) => {
-                            const p = statusBadge(r.status)
+                            const p = statusBadge(r.status, t)
                             const active = r.id === selected
                             return (
                                 <div key={r.id} className={`map-room-row${active ? ' map-room-row--selected' : ''}`}>
@@ -306,7 +331,7 @@ export default function MapView() {
                                     >
                                         <span className="map-room-row__text">
                                             <span className="map-room-row__name">{r.name}</span>
-                                            <span className="map-room-row__meta">Last scan · {r.lastScan}</span>
+                                            <span className="map-room-row__meta">{t('map.sidebar.last_scan', { time: r.lastScan })}</span>
                                         </span>
                                         <span
                                             className="map-room-row__badge"
@@ -330,7 +355,7 @@ export default function MapView() {
                                                         sendNavigationCommand(r, 'scan')
                                                     }}
                                                 >
-                                                    Scan area
+                                                    {t('map.sidebar.actions.scan')}
                                                 </button>
                                                 <button
                                                     type="button"
@@ -340,7 +365,7 @@ export default function MapView() {
                                                         sendNavigationCommand(r, 'navigate')
                                                     }}
                                                 >
-                                                    Send to sector
+                                                    {t('map.sidebar.actions.navigate')}
                                                 </button>
                                             </div>
                                         </div>
@@ -354,8 +379,8 @@ export default function MapView() {
                 <section className="map-canvas-col" aria-label="Site map">
                     <div className="map-canvas-toolbar">
                         <div className="map-canvas-toolbar__meta">
-                            <span className="map-canvas-toolbar__title">Site overview</span>
-                            <span className="map-canvas-toolbar__sub">Organization · Live</span>
+                            <span className="map-canvas-toolbar__title">{t('map.canvas.overview')}</span>
+                            <span className="map-canvas-toolbar__sub">{t('map.canvas.live')}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                             <button
@@ -417,18 +442,26 @@ export default function MapView() {
                         >
                             <div className="map-minimap__grid" />
                             <div className="map-minimap__frame" />
-                            <div className="map-minimap__hint">Drag to pan</div>
+                            <div className="map-minimap__hint">{t('map.canvas.drag_to_pan')}</div>
                             <div className="map-minimap__handle" aria-hidden>
                                 ⠿
                             </div>
-                            <div className="map-minimap__label">Viewport</div>
+                            <div className="map-minimap__label">{t('map.canvas.viewport')}</div>
                         </div>
                     </div>
 
                     <div className="map-status-bar" role="status">
                         <span className="map-status-bar__robot-line">
-                            Robot · <strong className="map-status-bar__sector">{robotMeta.name}</strong>
-                            <span className="map-status-bar__battery"> · Bat {batteryPct.toFixed(batteryPct % 1 === 0 ? 0 : 1)}%</span>
+                            {t('map.status.robot')} <strong className="map-status-bar__sector">{robotMeta.name}</strong>
+                            <span
+                                className="map-status-bar__battery"
+                                aria-label={`${t('map.env.battery')} ${batteryPct.toFixed(batteryPct % 1 === 0 ? 0 : 1)}%`}
+                            >
+                                {' '}
+                                ·{' '}
+                                <MapBatteryGlyph pct={batteryPct} className="map-status-bar__battery-ico" />
+                                {batteryPct.toFixed(batteryPct % 1 === 0 ? 0 : 1)}%
+                            </span>
                         </span>
                         <span className="map-status-bar__coords" title="Move the cursor over the map for live coordinates" aria-live="polite">
                             {cursorCoords ? (
@@ -439,15 +472,15 @@ export default function MapView() {
                                     </span>
                                 </>
                             ) : (
-                                <span className="map-status-bar__coords-hint">Hover map for WGS‑84</span>
+                                <span className="map-status-bar__coords-hint">{t('map.status.hover')}</span>
                             )}
                         </span>
-                        <span className="map-status-bar__last-scan">Last scan · {robotMeta.lastScan}</span>
+                        <span className="map-status-bar__last-scan">{t('map.status.last_scan', { time: robotMeta.lastScan })}</span>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                             {robotMoving ? (
                                 <>
                                     <span className="map-status-bar__dot" aria-hidden />
-                                    <span className="map-status-bar__moving">Moving</span>
+                                    <span className="map-status-bar__moving">{t('map.status.moving')}</span>
                                 </>
                             ) : null}
                         </span>

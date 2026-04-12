@@ -76,6 +76,11 @@
     color: rgba(125, 157, 168, 0.95);
 }
 
+.map-env-strip__battery-ico {
+    color: rgba(125, 211, 160, 0.92);
+    filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.22));
+}
+
 .map-page__toolbar {
     display: flex;
     align-items: center;
@@ -398,9 +403,18 @@
 }
 
 .map-status-bar__battery {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     font-weight: 500;
     color: var(--text-muted);
     font-size: 0.78rem;
+}
+
+.map-status-bar__battery-ico {
+    flex-shrink: 0;
+    color: rgba(125, 211, 160, 0.9);
+    opacity: 0.95;
 }
 
 .map-status-bar__coords {
@@ -437,7 +451,7 @@
     height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
-    background: var(--status-good);
+    background: #22c55e;
     animation: map-moving-blink-green 0.85s ease-in-out infinite;
 }
 
