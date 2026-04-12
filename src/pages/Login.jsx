@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react
 import { useAuth } from '../context/AuthContext'
 import { formatSupabaseAuthError } from '../lib/authErrors'
 import { consumeOAuthSearchParamsIfError, getAuthRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
+import { markSmoothAppEnter } from '../lib/appEnterTransition'
 
 const googleIcon = (
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
@@ -99,6 +100,7 @@ export default function Login() {
                 }
                 return
             }
+            markSmoothAppEnter()
             navigate('/')
         } finally {
             setSubmitting(false)

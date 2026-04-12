@@ -3,6 +3,7 @@ import { User, Mail, Lock, ArrowRight } from 'lucide-react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { formatSupabaseAuthError } from '../lib/authErrors'
+import { markSmoothAppEnter } from '../lib/appEnterTransition'
 import { consumeOAuthSearchParamsIfError, getAuthRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
 
 const googleIcon = (
@@ -76,6 +77,7 @@ export default function Register() {
                 return
             }
             if (data.session) {
+                markSmoothAppEnter()
                 navigate('/')
                 return
             }

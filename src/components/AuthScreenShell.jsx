@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Map, Cpu, ShieldCheck } from 'lucide-react'
-import logo from '../assets/afr-logo.png'
+import AuthBrandPanel from './AuthBrandPanel'
 
 export default function AuthScreenShell({ children }) {
     const { t, i18n } = useTranslation()
@@ -32,21 +32,7 @@ export default function AuthScreenShell({ children }) {
 
             <div className="auth-shell__layout" dir={dir}>
                 <aside className="auth-shell__brand">
-                    <div className="auth-shell__brand-mark">
-                        <img src={logo} alt="" width={48} height={48} />
-                    </div>
-                    <h2 className="auth-shell__brand-title">{t('auth_entry.brand_title')}</h2>
-                    <p className="auth-shell__brand-lede">{t('auth_entry.brand_tagline')}</p>
-                    <ul className="auth-shell__highlights">
-                        {highlights.map(({ key, icon: Ico }) => (
-                            <li key={key} className="auth-shell__highlight">
-                                <span className="auth-shell__highlight-ico" aria-hidden>
-                                    <Ico size={16} strokeWidth={1.75} />
-                                </span>
-                                <span>{t(`auth_entry.${key}`)}</span>
-                            </li>
-                        ))}
-                    </ul>
+                    <AuthBrandPanel t={t} highlights={highlights} />
                 </aside>
 
                 <div className="auth-shell__main">

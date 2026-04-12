@@ -23,9 +23,24 @@ html[data-theme='light'] .auth-shell__highlight {
 }
 
 html[data-theme='light'] .auth-shell__highlight-ico {
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: none;
+    border: none;
     color: var(--accent-interactive);
+    filter: none;
+    opacity: 1;
+}
+
+html[data-theme='light'] .auth-shell__brand-features::before {
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--accent-interactive) 75%, #0f172a) 0%,
+        color-mix(in srgb, var(--accent-interactive) 28%, transparent) 55%,
+        rgba(15, 23, 42, 0.08) 100%
+    );
+}
+
+html[data-theme='light'] .auth-shell__highlights-heading::after {
+    background: linear-gradient(90deg, rgba(125, 157, 168, 0.35), transparent);
 }
 
 html[data-theme='light'] .auth-shell::after {
