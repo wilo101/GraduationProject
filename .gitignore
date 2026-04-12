@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +25,21 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/
+.playwright-mcp/
+playwright-evidence/
+
+# Local media / scratch (not for repo)
+frames/
+*.mp4
+
+# Local agent tooling (symlinks + cached skills)
+.agents/
+skills/
+.cursor/
+.claude/
