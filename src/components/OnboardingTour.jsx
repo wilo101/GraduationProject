@@ -18,12 +18,6 @@ const STEPS = [
         text: 'Open control and press ENGAGE only when connection status is strong.',
     },
     {
-        id: 'estop',
-        selector: '[data-tour="estop-btn"]',
-        title: 'Emergency stop',
-        text: 'Use this at any moment to trigger immediate stop confirmation.',
-    },
-    {
         id: 'map',
         selector: '[data-tour="nav-map"]',
         title: 'Map access',

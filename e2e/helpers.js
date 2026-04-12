@@ -7,7 +7,7 @@ export async function skipSplash(page) {
         await b.click({ timeout: 12_000 })
         await page.waitForTimeout(400)
     } catch {
-        /* Splash already finished or not shown */
+    /* Splash already finished or not shown */
     }
 }
 

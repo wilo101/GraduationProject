@@ -1,4 +1,7 @@
-/* Auth (login / register) — centered card, gradient mesh only */
+/*
+ * Auth (login / register) — editorial layout
+ * Background stack: base → fog → weave → dot grid → sheen → film grain + fine speckle.
+ */
 
 .auth-shell {
     min-height: 100dvh;
@@ -13,6 +16,344 @@
     gap: clamp(1.5rem, 3vw, 2.5rem);
 }
 
+.auth-shell--3d {
+    overflow-x: hidden;
+    padding: clamp(1rem, 3vw, 2rem);
+    /* Vertically center the whole auth block in the viewport */
+    align-items: center;
+}
+
+/* Second full-screen tint disabled — stage owns the canvas */
+.auth-shell--3d::after {
+    opacity: 0;
+}
+
+.auth-shell__stage {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.auth-shell__stage-bg {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 140% 90% at 50% 115%, rgba(0, 0, 0, 0.55) 0%, transparent 52%),
+        radial-gradient(ellipse 70% 55% at 12% 8%, rgba(125, 157, 168, 0.11) 0%, transparent 58%),
+        radial-gradient(ellipse 55% 45% at 92% 18%, rgba(100, 116, 139, 0.07) 0%, transparent 50%),
+        linear-gradient(158deg, #12151c 0%, #0d1017 42%, #080a0f 100%);
+}
+
+/* Soft atmospheric blobs — depth without clutter */
+.auth-shell__stage-fog {
+    position: absolute;
+    inset: -18%;
+    background:
+        radial-gradient(ellipse 58% 50% at 16% 20%, rgba(125, 157, 168, 0.11) 0%, transparent 56%),
+        radial-gradient(ellipse 52% 46% at 90% 76%, rgba(100, 116, 139, 0.075) 0%, transparent 54%),
+        radial-gradient(ellipse 48% 38% at 52% 6%, rgba(148, 163, 184, 0.055) 0%, transparent 52%),
+        radial-gradient(ellipse 70% 55% at 50% 100%, rgba(15, 23, 42, 0.35) 0%, transparent 58%);
+    pointer-events: none;
+}
+
+/* Diagonal weave — linen + faint cross-hatch */
+.auth-shell__stage-weave {
+    position: absolute;
+    inset: 0;
+    opacity: 0.62;
+    background-image:
+        repeating-linear-gradient(
+            118deg,
+            rgba(255, 255, 255, 0) 0,
+            rgba(255, 255, 255, 0) 11px,
+            rgba(255, 255, 255, 0.02) 11px,
+            rgba(255, 255, 255, 0.02) 12px
+        ),
+        repeating-linear-gradient(
+            -118deg,
+            rgba(255, 255, 255, 0) 0,
+            rgba(255, 255, 255, 0) 11px,
+            rgba(255, 255, 255, 0.016) 11px,
+            rgba(255, 255, 255, 0.016) 12px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            rgba(255, 255, 255, 0) 0,
+            rgba(255, 255, 255, 0) 23px,
+            rgba(255, 255, 255, 0.008) 23px,
+            rgba(255, 255, 255, 0.008) 24px
+        );
+    mask-image: radial-gradient(ellipse 90% 82% at 50% 44%, black 14%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 82% at 50% 44%, black 14%, transparent 80%);
+}
+
+/*
+ * Dual-scale dot grid — fine + coarse (offset) reads like halftone / blueprints
+ */
+.auth-shell__stage-grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.52;
+    background-image:
+        radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.25px),
+        radial-gradient(rgba(255, 255, 255, 0.038) 1px, transparent 1.6px);
+    background-size: 19px 19px, 52px 52px;
+    background-position:
+        0 0,
+        11px 7px;
+    mask-image: radial-gradient(ellipse 88% 78% at 50% 42%, black 18%, transparent 76%);
+    -webkit-mask-image: radial-gradient(ellipse 88% 78% at 50% 42%, black 18%, transparent 76%);
+}
+
+/* Top sheen — soft studio light on the canvas */
+.auth-shell__stage-sheen {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.055) 0%,
+        rgba(255, 255, 255, 0.012) 22%,
+        transparent 48%
+    );
+}
+
+/* Coarse film grain */
+.auth-shell__stage-grain {
+    position: absolute;
+    inset: 0;
+    opacity: 0.042;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.68' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+    mix-blend-mode: overlay;
+}
+
+/* Fine speckle — sits on top for tactile finish */
+.auth-shell__stage-grain--fine {
+    opacity: 0.026;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 128 128' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.12' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+    background-size: 128px 128px;
+    mix-blend-mode: soft-light;
+}
+
+.auth-shell__layout {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: min(1040px, 100%);
+    margin-inline: auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(1.5rem, 4vw, 2.5rem);
+    align-items: center;
+}
+
+@media (min-width: 880px) {
+    .auth-shell__layout {
+        grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+        gap: clamp(2.25rem, 5vw, 3.75rem);
+        align-items: stretch;
+        /* Row fills viewport so the brand column can center its content vertically */
+        min-height: calc(100dvh - clamp(2.5rem, 5vw, 4.5rem));
+    }
+}
+
+.auth-shell__brand {
+    text-align: start;
+    padding: clamp(0.5rem, 2vw, 1rem) 0;
+}
+
+@media (max-width: 879px) {
+    .auth-shell__brand {
+        padding-top: clamp(0.5rem, 2vw, 1rem);
+        padding-bottom: 1.35rem;
+        margin-bottom: 0.25rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+}
+
+@media (min-width: 880px) {
+    .auth-shell__brand {
+        padding-inline-end: clamp(1.5rem, 3vw, 2.25rem);
+        margin-inline-end: 0.25rem;
+        border-inline-end: 1px solid rgba(255, 255, 255, 0.07);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: start;
+        min-height: 0;
+    }
+}
+
+.auth-shell__brand-mark {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.auth-shell__brand-mark img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.auth-shell__brand-title {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-heading);
+    font-size: clamp(1.4rem, 2.6vw, 1.85rem);
+    font-weight: 600;
+    letter-spacing: -0.028em;
+    line-height: 1.18;
+    color: var(--text-primary);
+    text-wrap: balance;
+}
+
+.auth-shell__brand-lede {
+    margin: 0 0 1.35rem;
+    font-size: 0.9125rem;
+    line-height: 1.6;
+    font-weight: 400;
+    color: var(--text-secondary);
+    max-width: 36ch;
+}
+
+.auth-shell__highlights {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.auth-shell__highlight {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    line-height: 1.45;
+}
+
+.auth-shell__highlight-ico {
+    flex-shrink: 0;
+    margin-top: 0.06rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 7px;
+    display: grid;
+    place-items: center;
+    color: color-mix(in srgb, var(--accent-interactive) 92%, white);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.auth-shell--3d .auth-shell__main {
+    max-width: 26.5rem;
+    width: 100%;
+    margin-inline: auto;
+}
+
+@media (min-width: 880px) {
+    .auth-shell--3d .auth-shell__main {
+        margin-inline: 0;
+        max-width: none;
+        justify-content: center;
+        align-self: stretch;
+        min-height: 0;
+    }
+}
+
+html[data-theme='light'] .auth-shell__stage-bg {
+    background:
+        radial-gradient(ellipse 130% 85% at 50% 108%, rgba(148, 163, 184, 0.16) 0%, transparent 52%),
+        radial-gradient(ellipse 65% 50% at 8% 12%, rgba(125, 157, 168, 0.11) 0%, transparent 55%),
+        linear-gradient(165deg, #f8fafc 0%, #eef2f7 48%, #e8edf4 100%);
+}
+
+html[data-theme='light'] .auth-shell__stage-fog {
+    background:
+        radial-gradient(ellipse 58% 50% at 14% 18%, rgba(125, 157, 168, 0.14) 0%, transparent 56%),
+        radial-gradient(ellipse 52% 46% at 88% 74%, rgba(148, 163, 184, 0.1) 0%, transparent 54%),
+        radial-gradient(ellipse 70% 55% at 50% 100%, rgba(203, 213, 225, 0.45) 0%, transparent 58%);
+}
+
+html[data-theme='light'] .auth-shell__stage-weave {
+    opacity: 0.42;
+    background-image:
+        repeating-linear-gradient(
+            118deg,
+            rgba(15, 23, 42, 0) 0,
+            rgba(15, 23, 42, 0) 11px,
+            rgba(15, 23, 42, 0.035) 11px,
+            rgba(15, 23, 42, 0.035) 12px
+        ),
+        repeating-linear-gradient(
+            -118deg,
+            rgba(15, 23, 42, 0) 0,
+            rgba(15, 23, 42, 0) 11px,
+            rgba(15, 23, 42, 0.028) 11px,
+            rgba(15, 23, 42, 0.028) 12px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            rgba(15, 23, 42, 0) 0,
+            rgba(15, 23, 42, 0) 23px,
+            rgba(15, 23, 42, 0.018) 23px,
+            rgba(15, 23, 42, 0.018) 24px
+        );
+}
+
+html[data-theme='light'] .auth-shell__stage-grid {
+    opacity: 0.48;
+    background-image:
+        radial-gradient(rgba(15, 23, 42, 0.07) 1px, transparent 1.25px),
+        radial-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 1.6px);
+    background-size: 19px 19px, 52px 52px;
+    background-position:
+        0 0,
+        11px 7px;
+}
+
+html[data-theme='light'] .auth-shell__stage-sheen {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.72) 0%,
+        rgba(255, 255, 255, 0.18) 18%,
+        transparent 46%
+    );
+}
+
+html[data-theme='light'] .auth-shell__stage-grain {
+    opacity: 0.032;
+    mix-blend-mode: multiply;
+}
+
+html[data-theme='light'] .auth-shell__stage-grain--fine {
+    opacity: 0.02;
+    mix-blend-mode: multiply;
+}
+
+@media (max-width: 879px) {
+    html[data-theme='light'] .auth-shell__brand {
+        border-bottom-color: rgba(15, 23, 42, 0.08);
+    }
+}
+
+@media (min-width: 880px) {
+    html[data-theme='light'] .auth-shell__brand {
+        border-inline-end-color: rgba(15, 23, 42, 0.1);
+    }
+}
+
 .auth-shell::after {
     content: '';
     position: fixed;
@@ -22,27 +363,6 @@
         radial-gradient(ellipse 70% 60% at 85% 75%, rgba(100, 116, 139, 0.07) 0%, transparent 50%),
         linear-gradient(165deg, rgba(12, 13, 17, 0.97) 0%, rgba(10, 11, 15, 0.99) 100%);
     pointer-events: none;
-}
-
-.auth-shell__ambient {
-    position: absolute;
-    width: min(48vw, 420px);
-    height: min(48vw, 420px);
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(125, 157, 168, 0.12) 0%, transparent 68%);
-    filter: blur(72px);
-    pointer-events: none;
-    z-index: 0;
-}
-
-.auth-shell__ambient--tr {
-    top: -8%;
-    inset-inline-end: -6%;
-}
-
-.auth-shell__ambient--bl {
-    bottom: -10%;
-    inset-inline-start: -4%;
 }
 
 .auth-shell__main {
@@ -58,31 +378,30 @@
     text-align: center;
 }
 
-/* Card */
+/* Framer Motion outlet inside auth card (login ↔ register) */
+.auth-card-motion {
+    width: 100%;
+}
+
+/* Card — solid elevated surface (inset top highlight, no faux rim) */
 .auth-card {
     position: relative;
+    z-index: 1;
     width: 100%;
-    padding: clamp(2rem, 4vw, 2.65rem) clamp(1.65rem, 3vw, 2.15rem) clamp(2rem, 4vw, 2.35rem);
-    border-radius: var(--radius-md);
-    background: rgba(14, 15, 20, 0.82);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: 0 28px 56px rgba(4, 6, 12, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    padding: clamp(2rem, 4.5vw, 2.75rem) clamp(1.75rem, 3.2vw, 2.25rem);
+    border-radius: var(--radius-lg);
+    background: rgba(15, 17, 23, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 4px 6px rgba(0, 0, 0, 0.12),
+        0 22px 48px rgba(0, 0, 0, 0.48);
+    backdrop-filter: blur(20px) saturate(1.06);
+    -webkit-backdrop-filter: blur(20px) saturate(1.06);
 }
 
 .auth-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.12) 0%, transparent 42%, transparent 58%, rgba(125, 157, 168, 0.08) 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
+    display: none;
 }
 
 /* Staggered reveal */
@@ -128,22 +447,22 @@
 
 .auth-display {
     font-family: var(--font-heading);
-    font-size: clamp(1.85rem, 4.5vw, 2.35rem);
-    font-weight: 700;
-    letter-spacing: -0.038em;
-    line-height: 1.06;
+    font-size: clamp(1.45rem, 3.5vw, 1.9rem);
+    font-weight: 600;
+    letter-spacing: -0.026em;
+    line-height: 1.14;
     color: var(--text-primary);
     text-wrap: balance;
-    margin: 0 0 0.45rem;
+    margin: 0 0 0.5rem;
 }
 
 .auth-lede {
-    margin: 0 auto 1.65rem;
-    font-size: 0.98rem;
+    margin: 0 auto 1.5rem;
+    font-size: 0.9375rem;
     font-weight: 400;
     line-height: 1.58;
     color: var(--text-secondary);
-    max-width: 36ch;
+    max-width: 34ch;
     text-wrap: balance;
 }
 

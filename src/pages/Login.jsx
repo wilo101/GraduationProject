@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Mail, Lock, ArrowRight, Phone } from 'lucide-react'
+import { Mail, Lock, ArrowRight } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import AuthScreenShell from '../components/AuthScreenShell'
 import { formatSupabaseAuthError } from '../lib/authErrors'
 import { consumeOAuthSearchParamsIfError, getAuthRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
 
@@ -16,7 +15,6 @@ const googleIcon = (
 )
 
 const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
-const phoneOk = (v) => /^\+\d{8,15}$/.test(v.trim())
 const ICON = 1.75
 
 export default function Login() {
@@ -24,17 +22,11 @@ export default function Login() {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const oauthError = searchParams.get('error')
-    const [method, setMethod] = useState('email') // 'email' | 'phone'
-    const isEmail = method === 'email'
-    const isPhone = method === 'phone'
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [phone, setPhone] = useState('')
-    const [otp, setOtp] = useState('')
-    const [otpSent, setOtpSent] = useState(false)
 
-    const [errors, setErrors] = useState({ email: '', password: '', phone: '', otp: '' })
+    const [errors, setErrors] = useState({ email: '', password: '' })
     const [formError, setFormError] = useState('')
     /** Banner tone: notice = soft guidance, info = positive/update, alert = configuration / serious */
     const [formErrorVariant, setFormErrorVariant] = useState('alert')
@@ -70,14 +62,14 @@ export default function Login() {
 
     const canUseSupabase = useMemo(() => Boolean(supabase), [])
 
-    const resetErrors = () => setErrors({ email: '', password: '', phone: '', otp: '' })
+    const resetErrors = () => setErrors({ email: '', password: '' })
 
     const handleEmailLogin = async (e) => {
         e.preventDefault()
         clearFlash()
         resetErrors()
 
-        const next = { email: '', password: '', phone: '', otp: '' }
+        const next = { email: '', password: '' }
         if (!email.trim()) next.email = 'Enter the email you signed up with.'
         else if (!emailOk(email)) next.email = 'That does not look like a valid email address.'
         if (!password) next.password = 'Password is required.'
@@ -113,74 +105,6 @@ export default function Login() {
         }
     }
 
-    const handleSendOtp = async (e) => {
-        e.preventDefault()
-        clearFlash()
-        resetErrors()
-
-        const next = { email: '', password: '', phone: '', otp: '' }
-        const p = phone.trim()
-        if (!p) next.phone = 'Enter your phone number in international format (e.g. +2010...).'
-        else if (!phoneOk(p)) next.phone = 'Use international format like +2010... (numbers only).'
-        setErrors(next)
-        if (next.phone) return
-
-        if (!canUseSupabase) {
-            setFlash('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env', 'alert')
-            return
-        }
-
-        setSubmitting(true)
-        try {
-            const { error } = await supabase.auth.signInWithOtp({ phone: p })
-            if (error) {
-                setFlash(formatSupabaseAuthError(error.message), 'alert')
-                return
-            }
-            setOtpSent(true)
-            setFlash('We sent a verification code to your phone.', 'info')
-        } finally {
-            setSubmitting(false)
-        }
-    }
-
-    const handleVerifyOtp = async (e) => {
-        e.preventDefault()
-        clearFlash()
-        resetErrors()
-
-        const next = { email: '', password: '', phone: '', otp: '' }
-        const p = phone.trim()
-        const t = otp.trim()
-        if (!p) next.phone = 'Phone number is required.'
-        else if (!phoneOk(p)) next.phone = 'Use international format like +2010... (numbers only).'
-        if (!t) next.otp = 'Enter the 6-digit code.'
-        else if (!/^\d{6}$/.test(t)) next.otp = 'Code must be 6 digits.'
-        setErrors(next)
-        if (next.phone || next.otp) return
-
-        if (!canUseSupabase) {
-            setFlash('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env', 'alert')
-            return
-        }
-
-        setSubmitting(true)
-        try {
-            const { error } = await supabase.auth.verifyOtp({
-                phone: p,
-                token: t,
-                type: 'sms',
-            })
-            if (error) {
-                setFlash(formatSupabaseAuthError(error.message), 'alert')
-                return
-            }
-            navigate('/')
-        } finally {
-            setSubmitting(false)
-        }
-    }
-
     const handleGoogle = async () => {
         clearFlash()
         if (!supabase) {
@@ -198,7 +122,7 @@ export default function Login() {
     }
 
     return (
-        <AuthScreenShell>
+        <>
             <header>
                 <h1 className="auth-display">Welcome back</h1>
                 <p className="auth-lede">Use your Augustus credentials. Maps and feeds load after you sign in.</p>
@@ -231,196 +155,73 @@ export default function Login() {
                 ) : null}
             </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-                <button
-                    type="button"
-                    className="auth-social-btn"
-                    onClick={() => {
-                        setMethod('email')
-                        clearFlash()
-                        resetErrors()
-                        setOtpSent(false)
-                        setOtp('')
-                    }}
-                    style={{
-                        justifyContent: 'center',
-                        border: isEmail ? '1px solid rgba(99,102,241,.55)' : undefined,
-                        background: isEmail ? 'rgba(99,102,241,.12)' : undefined,
-                    }}
-                >
-                    <Mail size={18} aria-hidden />
-                    Email
-                </button>
-                <button
-                    type="button"
-                    className="auth-social-btn"
-                    onClick={() => {
-                        setMethod('phone')
-                        clearFlash()
-                        resetErrors()
-                        setOtpSent(false)
-                        setOtp('')
-                    }}
-                    style={{
-                        justifyContent: 'center',
-                        border: isPhone ? '1px solid rgba(99,102,241,.55)' : undefined,
-                        background: isPhone ? 'rgba(99,102,241,.12)' : undefined,
-                    }}
-                >
-                    <Phone size={18} aria-hidden />
-                    Phone
-                </button>
-            </div>
-
-            {isEmail ? (
-                <form id="auth-form" className="auth-form" onSubmit={handleEmailLogin} noValidate>
-                    <div>
-                        <label className="auth-field-label" htmlFor="login-email">
-                            Email address
-                        </label>
-                        <div className="auth-input-wrap">
-                            <Mail className="auth-icon" size={20} strokeWidth={ICON} aria-hidden />
-                            <input
-                                id="login-email"
-                                className="auth-input"
-                                type="email"
-                                autoComplete="email"
-                                placeholder="mohamed.marey@example.com"
-                                value={email}
-                                onChange={(e) => {
-                                    setEmail(e.target.value)
-                                    if (errors.email) setErrors((s) => ({ ...s, email: '' }))
-                                }}
-                                aria-invalid={Boolean(errors.email)}
-                                aria-describedby={errors.email ? 'login-email-err' : undefined}
-                            />
-                        </div>
-                        {errors.email ? (
-                            <p id="login-email-err" className="form-error" role="alert">
-                                {errors.email}
-                            </p>
-                        ) : null}
-                    </div>
-
-                    <div>
-                        <div className="auth-row-label">
-                            <label className="auth-field-label" htmlFor="login-password">
-                                Password
-                            </label>
-                            <button type="button" className="auth-forgot">
-                                Forgot password
-                            </button>
-                        </div>
-                        <div className="auth-input-wrap">
-                            <Lock className="auth-icon" size={20} strokeWidth={ICON} aria-hidden />
-                            <input
-                                id="login-password"
-                                className="auth-input"
-                                type="password"
-                                autoComplete="current-password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => {
-                                    setPassword(e.target.value)
-                                    if (errors.password) setErrors((s) => ({ ...s, password: '' }))
-                                }}
-                                aria-invalid={Boolean(errors.password)}
-                                aria-describedby={errors.password ? 'login-password-err' : undefined}
-                            />
-                        </div>
-                        {errors.password ? (
-                            <p id="login-password-err" className="form-error" role="alert">
-                                {errors.password}
-                            </p>
-                        ) : null}
-                    </div>
-
-                    <button type="submit" className="auth-primary-btn" disabled={submitting}>
-                        {submitting ? 'Signing in…' : 'Sign in'}{' '}
-                        {!submitting ? <ArrowRight size={20} strokeWidth={ICON} aria-hidden /> : null}
-                    </button>
-                </form>
-            ) : (
-                <form id="auth-form" className="auth-form" onSubmit={otpSent ? handleVerifyOtp : handleSendOtp} noValidate>
-                    <div>
-                        <label className="auth-field-label" htmlFor="login-phone">
-                            Phone number
-                        </label>
-                        <div className="auth-input-wrap">
-                            <Phone className="auth-icon" size={20} strokeWidth={ICON} aria-hidden />
-                            <input
-                                id="login-phone"
-                                className="auth-input"
-                                type="tel"
-                                autoComplete="tel"
-                                placeholder="+2010XXXXXXXXX"
-                                value={phone}
-                                onChange={(e) => {
-                                    setPhone(e.target.value)
-                                    if (errors.phone) setErrors((s) => ({ ...s, phone: '' }))
-                                }}
-                                aria-invalid={Boolean(errors.phone)}
-                                aria-describedby={errors.phone ? 'login-phone-err' : undefined}
-                            />
-                        </div>
-                        {errors.phone ? (
-                            <p id="login-phone-err" className="form-error" role="alert">
-                                {errors.phone}
-                            </p>
-                        ) : null}
-                    </div>
-
-                    {otpSent ? (
-                        <div>
-                            <label className="auth-field-label" htmlFor="login-otp">
-                                Verification code
-                            </label>
-                            <div className="auth-input-wrap">
-                                <Lock className="auth-icon" size={20} strokeWidth={ICON} aria-hidden />
-                                <input
-                                    id="login-otp"
-                                    className="auth-input"
-                                    inputMode="numeric"
-                                    placeholder="123456"
-                                    value={otp}
-                                    onChange={(e) => {
-                                        setOtp(e.target.value)
-                                        if (errors.otp) setErrors((s) => ({ ...s, otp: '' }))
-                                    }}
-                                    aria-invalid={Boolean(errors.otp)}
-                                    aria-describedby={errors.otp ? 'login-otp-err' : undefined}
-                                />
-                            </div>
-                            {errors.otp ? (
-                                <p id="login-otp-err" className="form-error" role="alert">
-                                    {errors.otp}
-                                </p>
-                            ) : null}
-                        </div>
-                    ) : null}
-
-                    <button type="submit" className="auth-primary-btn" disabled={submitting}>
-                        {submitting ? (otpSent ? 'Verifying…' : 'Sending…') : otpSent ? 'Verify code' : 'Send code'}{' '}
-                        {!submitting ? <ArrowRight size={20} strokeWidth={ICON} aria-hidden /> : null}
-                    </button>
-
-                    {otpSent ? (
-                        <button
-                            type="button"
-                            className="auth-social-btn"
-                            onClick={() => {
-                                setOtpSent(false)
-                                setOtp('')
-                                clearFlash()
-                                resetErrors()
+            <form id="auth-form" className="auth-form" onSubmit={handleEmailLogin} noValidate>
+                <div>
+                    <label className="auth-field-label" htmlFor="login-email">
+                        Email address
+                    </label>
+                    <div className="auth-input-wrap">
+                        <Mail className="auth-icon" size={20} strokeWidth={ICON} aria-hidden />
+                        <input
+                            id="login-email"
+                            className="auth-input"
+                            type="email"
+                            autoComplete="email"
+                            placeholder="mohamed.marey@example.com"
+                            value={email}
+                            onChange={(e) => {
+                                setEmail(e.target.value)
+                                if (errors.email) setErrors((s) => ({ ...s, email: '' }))
                             }}
-                            style={{ justifyContent: 'center' }}
-                        >
-                            Change phone / resend
-                        </button>
+                            aria-invalid={Boolean(errors.email)}
+                            aria-describedby={errors.email ? 'login-email-err' : undefined}
+                        />
+                    </div>
+                    {errors.email ? (
+                        <p id="login-email-err" className="form-error" role="alert">
+                            {errors.email}
+                        </p>
                     ) : null}
-                </form>
-            )}
+                </div>
+
+                <div>
+                    <div className="auth-row-label">
+                        <label className="auth-field-label" htmlFor="login-password">
+                            Password
+                        </label>
+                        <button type="button" className="auth-forgot">
+                            Forgot password
+                        </button>
+                    </div>
+                    <div className="auth-input-wrap">
+                        <Lock className="auth-icon" size={20} strokeWidth={ICON} aria-hidden />
+                        <input
+                            id="login-password"
+                            className="auth-input"
+                            type="password"
+                            autoComplete="current-password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => {
+                                setPassword(e.target.value)
+                                if (errors.password) setErrors((s) => ({ ...s, password: '' }))
+                            }}
+                            aria-invalid={Boolean(errors.password)}
+                            aria-describedby={errors.password ? 'login-password-err' : undefined}
+                        />
+                    </div>
+                    {errors.password ? (
+                        <p id="login-password-err" className="form-error" role="alert">
+                            {errors.password}
+                        </p>
+                    ) : null}
+                </div>
+
+                <button type="submit" className="auth-primary-btn" disabled={submitting}>
+                    {submitting ? 'Signing in…' : 'Sign in'}{' '}
+                    {!submitting ? <ArrowRight size={20} strokeWidth={ICON} aria-hidden /> : null}
+                </button>
+            </form>
 
             <div className="auth-divider" role="separator">
                 <span>Or continue with</span>
@@ -439,6 +240,6 @@ export default function Login() {
                     Create account
                 </Link>
             </footer>
-        </AuthScreenShell>
+        </>
     )
 }

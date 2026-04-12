@@ -13,6 +13,21 @@
  */
 
 /* --- Auth --- */
+html[data-theme='light'] .auth-shell__brand-mark {
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.1);
+    background: rgba(255, 255, 255, 0.6);
+}
+
+html[data-theme='light'] .auth-shell__highlight {
+    color: var(--text-primary);
+}
+
+html[data-theme='light'] .auth-shell__highlight-ico {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    color: var(--accent-interactive);
+}
+
 html[data-theme='light'] .auth-shell::after {
     background:
         radial-gradient(ellipse 90% 70% at 20% 20%, rgba(125, 157, 168, 0.06) 0%, transparent 55%),
@@ -31,7 +46,7 @@ html[data-theme='light'] .auth-card:hover {
 }
 
 html[data-theme='light'] .auth-card::before {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, transparent 42%, transparent 58%, rgba(125, 157, 168, 0.04) 100%);
+    display: none;
 }
 
 html[data-theme='light'] .auth-flash--notice {
@@ -1201,23 +1216,4 @@ html[data-theme='light'] .mo-dpad-center {
         inset 0 2px 4px rgba(0, 0, 0, 0.1),
         inset 0 -1px 2px rgba(255, 255, 255, 0.5);
     border: 1px solid rgba(125, 157, 168, 0.2);
-}
-
-/* --- Sidebar E-stop --- */
-html[data-theme='light'] .sidebar-estop__modal-backdrop {
-    background: var(--modal-backdrop);
-}
-
-html[data-theme='light'] .sidebar-estop__modal {
-    background: var(--card-gradient);
-    border: 1px solid var(--border-ledge);
-    box-shadow: var(--shadow-soft), var(--shadow-inset-ledge);
-}
-
-html[data-theme='light'] .sidebar-estop__modal-title {
-    color: var(--text-primary);
-}
-
-html[data-theme='light'] .sidebar-estop__meta {
-    color: var(--text-muted);
 }

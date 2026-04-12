@@ -55,21 +55,6 @@ async (page) => {
 
     try {
         await gotoHash('/')
-        await page.getByRole('button', { name: 'Emergency Stop' }).click()
-        await page.waitForTimeout(200)
-        const estopDlg = page.getByRole('dialog', { name: 'Confirm emergency stop' })
-        if (!(await estopDlg.isVisible().catch(() => false))) {
-            report.failed.push({ check: 'estop-dialog', reason: 'not visible' })
-        } else {
-            await page.getByRole('button', { name: 'Cancel' }).click()
-            report.passed.push('estop-cancel')
-        }
-    } catch (e) {
-        report.failed.push({ check: 'estop', reason: String(e) })
-    }
-
-    try {
-        await gotoHash('/')
         await page.getByRole('button', { name: /View & Pair Devices/i }).click()
         await page.waitForTimeout(350)
         const dialogs = page.getByRole('dialog')

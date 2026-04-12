@@ -1,4 +1,11 @@
 {
+  "auth_entry": {
+    "brand_title": "Augustus OS",
+    "brand_tagline": "Field operations console — live maps, robots, and alerts in one secure workspace.",
+    "h1": "Site maps, zones & dispatch",
+    "h2": "Fleet telemetry & sensors",
+    "h3": "Organization-grade sign-in"
+  },
   "nav": {
     "overview": "Overview",
     "map": "Map",

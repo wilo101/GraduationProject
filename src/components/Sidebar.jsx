@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Home, Settings, Map, Zap, Shield } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -9,8 +9,6 @@ const ICON_SIZE = 22
 
 export default function Sidebar() {
     const { t } = useTranslation()
-    const [estopOpen, setEstopOpen] = useState(false)
-    const [lastEStopAt, setLastEStopAt] = useState(null)
 
     const navItems = useMemo(() => [
         { icon: Home, label: t('nav.overview'), path: '/' },
@@ -19,24 +17,6 @@ export default function Sidebar() {
         { icon: Shield, label: t('nav.diagnostics'), path: '/diagnostics' },
         { icon: Settings, label: t('nav.settings'), path: '/settings' },
     ], [t])
-
-    const estopLabel = t('nav.estop')
-
-    useEffect(() => {
-        const onKeyDown = (e) => {
-            if (e.key === 'Escape') setEstopOpen(false)
-        }
-        window.addEventListener('keydown', onKeyDown)
-        return () => window.removeEventListener('keydown', onKeyDown)
-    }, [])
-
-    const executeEStop = () => {
-        // Placeholder: later wire to ROS / WebSocket / API.
-        const now = new Date()
-        setLastEStopAt(now)
-        window.dispatchEvent(new CustomEvent('robot:estop', { detail: { at: now.toISOString() } }))
-        setEstopOpen(false)
-    }
 
     return (
         <aside className="sidebar-dock" aria-label="Main navigation">
@@ -72,63 +52,10 @@ export default function Sidebar() {
                 ))}
             </nav>
 
-            {/* E-Stop pinned bottom (does not change nav layout) */}
-            <div className="sidebar-dock__estop">
-                <button
-                    type="button"
-                    className="sidebar-nav__link sidebar-nav__link--estop"
-                    onClick={() => setEstopOpen(true)}
-                    aria-label={estopLabel}
-                    data-tour="estop-btn"
-                >
-                    <span className="sidebar-nav__icon" aria-hidden>
-                        <span className="sidebar-estop__glyph">⏹</span>
-                    </span>
-                    <span className="sidebar-nav__tip">{estopLabel}</span>
-                </button>
-                {lastEStopAt ? (
-                    <div className="sidebar-estop__meta" aria-hidden>
-                        {lastEStopAt.toLocaleTimeString()}
-                    </div>
-                ) : null}
-            </div>
-
             <div className="sidebar-dock__foot" aria-hidden>
                 <div className="sidebar-dock__foot-line" />
                 <div className="sidebar-dock__foot-dot" />
             </div>
-
-            {estopOpen ? (
-                <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Confirm emergency stop"
-                    className="sidebar-estop__modal-backdrop"
-                    onMouseDown={(e) => {
-                        if (e.target === e.currentTarget) setEstopOpen(false)
-                    }}
-                >
-                    <div className="sidebar-estop__modal glass-panel">
-                        <div className="sidebar-estop__modal-title">
-                            <span className="sidebar-estop__modal-icon" aria-hidden>
-                                ⏹
-                            </span>
-                            {t('estop.title')}
-                        </div>
-                        <div className="sidebar-estop__modal-sub">
-                            {t('estop.message')}
-                        </div>
-                        <div className="sidebar-estop__modal-actions">
-                            <button type="button" className="auth-social-btn" onClick={() => setEstopOpen(false)}>
-                                {t('estop.cancel')}
-                            </button>
-                            <button type="button" className="sidebar-estop__confirm" onClick={executeEStop}>
-                                {t('estop.confirm')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            ) : null}
         </aside>
     )
 }

@@ -8,6 +8,7 @@ import MapView from './pages/MapView'
 import SystemDiagnostics from './pages/SystemDiagnostics'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import AuthLayout from './layout/AuthLayout'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import SplashScreen from './components/SplashScreen'
@@ -38,8 +39,10 @@ function App() {
             {!isLoading && (
             <Router>
                 <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
+                    <Route element={<AuthLayout />}>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                    </Route>
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/terms" element={<Terms />} />
 
