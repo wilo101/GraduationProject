@@ -47,6 +47,16 @@
       "open_aria": "إدخال عنوان IP أو رابط البث",
       "load_failed": "تعذّر تحميل البث. تأكد من الرابط ومن أن الصفحة الآمنة (HTTPS) لا تحظر http."
     },
+    "camera_capture": {
+      "screenshot": "لقطة شاشة",
+      "screenshot_aria": "حفظ لقطة من الإطار الحالي",
+      "record_start": "تسجيل",
+      "record_stop": "إيقاف التسجيل",
+      "record_start_aria": "بدء التسجيل",
+      "record_stop_aria": "إيقاف وحفظ التسجيل",
+      "no_frame": "لا توجد صورة للالتقاط بعد.",
+      "record_failed": "فشل التسجيل. قد يكون البث من نطاق مختلف؛ جرّب لقطة الشاشة."
+    },
     "sensors": {
       "temp": "درجة الحرارة",
       "battery": "البطارية",

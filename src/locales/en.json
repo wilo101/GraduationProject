@@ -47,6 +47,16 @@
       "open_aria": "Enter camera IP or stream URL",
       "load_failed": "Could not load this stream. Check the URL and mixed content (HTTPS page cannot load plain HTTP)."
     },
+    "camera_capture": {
+      "screenshot": "Screenshot",
+      "screenshot_aria": "Save a screenshot of the current frame",
+      "record_start": "Record",
+      "record_stop": "Stop recording",
+      "record_start_aria": "Start recording",
+      "record_stop_aria": "Stop and save recording",
+      "no_frame": "No picture to capture yet.",
+      "record_failed": "Recording failed. If this is an IP camera, the stream may be cross-origin; try screenshot instead."
+    },
     "sensors": {
       "temp": "Temperature",
       "battery": "Battery",

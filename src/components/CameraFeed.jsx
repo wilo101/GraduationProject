@@ -1,6 +1,6 @@
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Maximize2, Minimize2, Video, Mic } from 'lucide-react'
+import { Maximize2, Minimize2, Video, Mic, Camera, Circle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 const STORAGE_KEY = 'camera-feed-stream-url'
@@ -56,6 +56,24 @@ function isProbablyMjpegOrImageStream(url) {
     )
 }
 
+function pickVideoMimeType() {
+    if (typeof MediaRecorder === 'undefined') return ''
+    const types = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
+    return types.find((t) => MediaRecorder.isTypeSupported(t)) || ''
+}
+
+function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.rel = 'noopener'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+}
+
 /**
  * @param {{ showChrome?: boolean; style?: React.CSSProperties; className?: string; onMicActiveChange?: (on: boolean) => void; onFullscreenChange?: (on: boolean) => void; cameraLabel?: string; cameraZone?: string; feedImageSrc?: string; feedImageAlt?: string; feedImageObjectPosition?: string; feedVideoSrc?: string; feedVideoPoster?: string }} props
  */
@@ -95,6 +113,15 @@ const CameraFeed = forwardRef(function CameraFeed(
     const [pathField, setPathField] = useState('')
     const [formError, setFormError] = useState('')
     const [streamLoadError, setStreamLoadError] = useState(false)
+    const [captureToast, setCaptureToast] = useState('')
+    const [recording, setRecording] = useState(false)
+
+    const streamVideoRef = useRef(null)
+    const streamImgRef = useRef(null)
+    const staticImgRef = useRef(null)
+    const toastTimerRef = useRef(0)
+    const mediaRecorderRef = useRef(null)
+    const recordChunksRef = useRef([])
 
     const effectiveVideoSrc = feedVideoSrc || internalStreamUrl || ''
 
@@ -148,6 +175,15 @@ const CameraFeed = forwardRef(function CameraFeed(
         setStreamLoadError(false)
     }, [effectiveVideoSrc])
 
+    const flashToast = useCallback(
+        (msg) => {
+            setCaptureToast(msg)
+            window.clearTimeout(toastTimerRef.current)
+            toastTimerRef.current = window.setTimeout(() => setCaptureToast(''), 2800)
+        },
+        []
+    )
+
     useEffect(() => {
         if (!modalOpen || typeof document === 'undefined') return
         const onKey = (e) => {
@@ -163,6 +199,163 @@ const CameraFeed = forwardRef(function CameraFeed(
         if (isProbablyMjpegOrImageStream(effectiveVideoSrc)) return false
         return true
     }, [effectiveVideoSrc])
+
+    const getCaptureEl = useCallback(() => {
+        if (effectiveVideoSrc) return useVideoTag ? streamVideoRef.current : streamImgRef.current
+        if (feedImageSrc) return staticImgRef.current
+        return null
+    }, [effectiveVideoSrc, useVideoTag, feedImageSrc])
+
+    const takeScreenshot = useCallback(() => {
+        const el = getCaptureEl()
+        if (!el) {
+            flashToast(t('dashboard.camera_capture.no_frame'))
+            return
+        }
+        const w = el instanceof HTMLVideoElement ? el.videoWidth : el.naturalWidth
+        const h = el instanceof HTMLVideoElement ? el.videoHeight : el.naturalHeight
+        const cw = w || el.clientWidth
+        const ch = h || el.clientHeight
+        if (!cw || !ch) {
+            flashToast(t('dashboard.camera_capture.no_frame'))
+            return
+        }
+        try {
+            const canvas = document.createElement('canvas')
+            canvas.width = cw
+            canvas.height = ch
+            const ctx = canvas.getContext('2d')
+            if (!ctx) return
+            ctx.drawImage(el, 0, 0, cw, ch)
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        flashToast(t('dashboard.camera_capture.record_failed'))
+                        return
+                    }
+                    downloadBlob(blob, `camera-${Date.now()}.png`)
+                },
+                'image/png',
+                0.92
+            )
+        } catch {
+            flashToast(t('dashboard.camera_capture.record_failed'))
+        }
+    }, [getCaptureEl, flashToast, t])
+
+    const stopRecording = useCallback(() => {
+        const mr = mediaRecorderRef.current
+        if (mr && mr.state !== 'inactive') {
+            try {
+                mr.stop()
+            } catch {
+                /* ignore */
+            }
+        }
+        mediaRecorderRef.current = null
+        setRecording(false)
+    }, [])
+
+    const startRecording = useCallback(() => {
+        if (typeof MediaRecorder === 'undefined') {
+            flashToast(t('dashboard.camera_capture.record_failed'))
+            return
+        }
+        const el = getCaptureEl()
+        if (!el) {
+            flashToast(t('dashboard.camera_capture.no_frame'))
+            return
+        }
+        const mime = pickVideoMimeType()
+        if (!mime) {
+            flashToast(t('dashboard.camera_capture.record_failed'))
+            return
+        }
+
+        const w = el instanceof HTMLVideoElement ? el.videoWidth : el.naturalWidth
+        const h = el instanceof HTMLVideoElement ? el.videoHeight : el.naturalHeight
+        const cw = w || el.clientWidth
+        const ch = h || el.clientHeight
+        if (!cw || !ch) {
+            flashToast(t('dashboard.camera_capture.no_frame'))
+            return
+        }
+
+        const canvas = document.createElement('canvas')
+        canvas.width = cw
+        canvas.height = ch
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return
+
+        let stream
+        try {
+            stream = canvas.captureStream(12)
+        } catch {
+            flashToast(t('dashboard.camera_capture.record_failed'))
+            return
+        }
+
+        recordChunksRef.current = []
+
+        let mr
+        try {
+            mr = new MediaRecorder(stream, { mimeType: mime })
+        } catch {
+            flashToast(t('dashboard.camera_capture.record_failed'))
+            return
+        }
+
+        mr.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) recordChunksRef.current.push(e.data)
+        }
+        mr.onstop = () => {
+            const chunks = recordChunksRef.current
+            recordChunksRef.current = []
+            if (!chunks.length) {
+                flashToast(t('dashboard.camera_capture.record_failed'))
+                return
+            }
+            const blob = new Blob(chunks, { type: 'video/webm' })
+            downloadBlob(blob, `camera-${Date.now()}.webm`)
+        }
+
+        const draw = () => {
+            if (mediaRecorderRef.current !== mr) return
+            try {
+                if (el instanceof HTMLVideoElement) {
+                    if (el.readyState >= 2) ctx.drawImage(el, 0, 0, cw, ch)
+                } else {
+                    ctx.drawImage(el, 0, 0, cw, ch)
+                }
+            } catch {
+                // cross-origin might taint canvas; keep trying
+            }
+            requestAnimationFrame(draw)
+        }
+
+        mediaRecorderRef.current = mr
+        setRecording(true)
+        draw()
+
+        try {
+            mr.start(250)
+        } catch {
+            mediaRecorderRef.current = null
+            setRecording(false)
+            flashToast(t('dashboard.camera_capture.record_failed'))
+        }
+    }, [flashToast, getCaptureEl, t])
+
+    const toggleRecording = useCallback(() => {
+        if (recording) stopRecording()
+        else startRecording()
+    }, [recording, startRecording, stopRecording])
+
+    useEffect(() => {
+        setCaptureToast('')
+        stopRecording()
+        window.clearTimeout(toastTimerRef.current)
+    }, [effectiveVideoSrc, stopRecording])
 
     const syncMic = useCallback(
         (on) => {
@@ -222,8 +415,10 @@ const CameraFeed = forwardRef(function CameraFeed(
         return () => {
             audioStreamRef.current?.getTracks().forEach((t) => t.stop())
             audioStreamRef.current = null
+            stopRecording()
+            window.clearTimeout(toastTimerRef.current)
         }
-    }, [])
+    }, [stopRecording])
 
     useEffect(() => {
         const onFsChange = () => {
@@ -387,6 +582,7 @@ const CameraFeed = forwardRef(function CameraFeed(
             >
                 {effectiveVideoSrc && useVideoTag ? (
                     <video
+                        ref={streamVideoRef}
                         key={effectiveVideoSrc}
                         src={effectiveVideoSrc}
                         poster={feedVideoPoster}
@@ -408,6 +604,7 @@ const CameraFeed = forwardRef(function CameraFeed(
                     />
                 ) : effectiveVideoSrc && !useVideoTag ? (
                     <img
+                        ref={streamImgRef}
                         key={effectiveVideoSrc}
                         src={effectiveVideoSrc}
                         alt=""
@@ -426,6 +623,7 @@ const CameraFeed = forwardRef(function CameraFeed(
                     />
                 ) : feedImageSrc ? (
                     <img
+                        ref={staticImgRef}
                         src={feedImageSrc}
                         alt={feedImageAlt}
                         style={{
@@ -441,6 +639,32 @@ const CameraFeed = forwardRef(function CameraFeed(
                         }}
                         draggable={false}
                     />
+                ) : null}
+
+                {captureToast ? (
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        style={{
+                            position: 'absolute',
+                            bottom: '4.25rem',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            zIndex: 22,
+                            maxWidth: 'min(92%, 420px)',
+                            padding: '0.45rem 0.75rem',
+                            borderRadius: 10,
+                            fontSize: '0.78rem',
+                            fontWeight: 650,
+                            textAlign: 'center',
+                            color: 'rgba(248,250,252,0.95)',
+                            background: 'rgba(15,23,42,0.88)',
+                            border: '1px solid rgba(255,255,255,0.12)',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+                        }}
+                    >
+                        {captureToast}
+                    </div>
                 ) : null}
 
                 {streamLoadError && effectiveVideoSrc ? (
@@ -598,10 +822,43 @@ const CameraFeed = forwardRef(function CameraFeed(
                                 bottom: '1rem',
                                 right: '1rem',
                                 display: 'flex',
+                                flexWrap: 'wrap',
+                                justifyContent: 'flex-end',
                                 gap: '0.5rem',
+                                maxWidth: 'calc(100% - 2rem)',
                                 zIndex: 20,
                             }}
                         >
+                            <button
+                                type="button"
+                                style={{
+                                    ...btnBase,
+                                    opacity: hasMediaLayer && !streamLoadError ? 1 : 0.42,
+                                }}
+                                disabled={!hasMediaLayer || streamLoadError}
+                                aria-label={t('dashboard.camera_capture.screenshot_aria')}
+                                title={t('dashboard.camera_capture.screenshot')}
+                                onClick={takeScreenshot}
+                            >
+                                <Camera size={16} aria-hidden />
+                            </button>
+                            <button
+                                type="button"
+                                style={{
+                                    ...btnBase,
+                                    opacity: hasMediaLayer && !streamLoadError ? 1 : 0.42,
+                                    borderColor: recording ? 'rgba(239,68,68,0.55)' : 'var(--camera-feed-btn-border)',
+                                    background: recording ? 'rgba(239,68,68,0.18)' : 'var(--camera-feed-btn-bg)',
+                                    color: recording ? '#fecaca' : 'var(--camera-feed-btn-color)',
+                                }}
+                                disabled={!hasMediaLayer || streamLoadError}
+                                aria-label={recording ? t('dashboard.camera_capture.record_stop_aria') : t('dashboard.camera_capture.record_start_aria')}
+                                aria-pressed={recording}
+                                title={recording ? t('dashboard.camera_capture.record_stop') : t('dashboard.camera_capture.record_start')}
+                                onClick={toggleRecording}
+                            >
+                                <Circle size={16} fill={recording ? 'currentColor' : 'none'} aria-hidden />
+                            </button>
                             <button
                                 type="button"
                                 style={{
