@@ -1,0 +1,19 @@
+{
+  "name": "Augustus OS",
+  "short_name": "Augustus",
+  "description": "Field operations console — live maps, cameras, and robots.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0c0d11",
+  "theme_color": "#0c0d11",
+  "icons": [
+    {
+      "src": "pwa-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

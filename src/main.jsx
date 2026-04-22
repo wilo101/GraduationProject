@@ -20,3 +20,22 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <App />
     </React.StrictMode>,
 )
+
+if (typeof window !== 'undefined') {
+    const standaloneMq = window.matchMedia('(display-mode: standalone)')
+    const syncStandalone = () => {
+        document.documentElement.dataset.pwaStandalone = standaloneMq.matches ? 'true' : 'false'
+    }
+    syncStandalone()
+    if (typeof standaloneMq.addEventListener === 'function') {
+        standaloneMq.addEventListener('change', syncStandalone)
+    } else if (typeof standaloneMq.addListener === 'function') {
+        standaloneMq.addListener(syncStandalone)
+    }
+}
+
+if (import.meta.env.PROD && typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {})
+    })
+}
