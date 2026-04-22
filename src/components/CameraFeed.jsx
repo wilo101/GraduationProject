@@ -1,21 +1,168 @@
-import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Maximize2, Minimize2, Video, Mic } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+
+const STORAGE_KEY = 'camera-feed-stream-url'
 
 function getFullscreenElement() {
     return document.fullscreenElement ?? document.webkitFullscreenElement ?? null
 }
 
+function parseUrlToFields(urlStr) {
+    try {
+        const u = new URL(urlStr)
+        const path = (u.pathname || '/') + (u.search || '')
+        return {
+            ip: u.hostname,
+            port: u.port || '',
+            path: path === '/' ? '' : path,
+        }
+    } catch {
+        return { ip: '', port: '', path: '' }
+    }
+}
+
+/** @param {string} ip */
+/** @param {string} port */
+/** @param {string} path */
+function buildStreamUrl(ip, port, path) {
+    const raw = ip.trim()
+    if (!raw) return null
+    if (/^https?:\/\//i.test(raw)) return raw.trim()
+
+    let p = path.trim()
+    if (p && !p.startsWith('/')) p = `/${p}`
+
+    const po = port.trim()
+    return `http://${raw}${po ? `:${po}` : ''}${p}`
+}
+
+function isProbablyVideoContainer(url) {
+    const u = url.toLowerCase()
+    return u.includes('.m3u8') || u.includes('.mp4') || u.includes('.webm') || u.includes('/hls') || u.includes('playlist')
+}
+
+function isProbablyMjpegOrImageStream(url) {
+    const u = url.toLowerCase()
+    return (
+        u.includes('mjpeg') ||
+        u.includes('mjpg') ||
+        u.includes('motion') ||
+        u.includes('videostream') ||
+        u.includes('snapshot') ||
+        u.includes('.jpg') ||
+        u.includes('cgi')
+    )
+}
+
 /**
- * @param {{ showChrome?: boolean; style?: React.CSSProperties; className?: string; onMicActiveChange?: (on: boolean) => void; onFullscreenChange?: (on: boolean) => void; cameraLabel?: string; cameraZone?: string }} props
+ * @param {{ showChrome?: boolean; style?: React.CSSProperties; className?: string; onMicActiveChange?: (on: boolean) => void; onFullscreenChange?: (on: boolean) => void; cameraLabel?: string; cameraZone?: string; feedImageSrc?: string; feedImageAlt?: string; feedImageObjectPosition?: string; feedVideoSrc?: string; feedVideoPoster?: string }} props
  */
 const CameraFeed = forwardRef(function CameraFeed(
-    { showChrome = true, style, className = '', onMicActiveChange, onFullscreenChange, cameraLabel = 'Perimeter cam 01', cameraZone = 'Live zone' },
+    {
+        showChrome = true,
+        style,
+        className = '',
+        onMicActiveChange,
+        onFullscreenChange,
+        cameraLabel = 'Perimeter cam 01',
+        cameraZone = 'Live zone',
+        feedImageSrc,
+        feedImageAlt = '',
+        feedImageObjectPosition = 'center',
+        feedVideoSrc,
+        feedVideoPoster,
+    },
     ref
 ) {
+    const { t } = useTranslation()
     const rootRef = useRef(null)
     const audioStreamRef = useRef(null)
     const [micActive, setMicActive] = useState(false)
     const [isFullscreen, setIsFullscreen] = useState(false)
+
+    const [internalStreamUrl, setInternalStreamUrl] = useState(() => {
+        try {
+            return localStorage.getItem(STORAGE_KEY) || ''
+        } catch {
+            return ''
+        }
+    })
+    const [modalOpen, setModalOpen] = useState(false)
+    const [ipField, setIpField] = useState('')
+    const [portField, setPortField] = useState('')
+    const [pathField, setPathField] = useState('')
+    const [formError, setFormError] = useState('')
+    const [streamLoadError, setStreamLoadError] = useState(false)
+
+    const effectiveVideoSrc = feedVideoSrc || internalStreamUrl || ''
+
+    const openConnectModal = useCallback(() => {
+        const src = feedVideoSrc || internalStreamUrl
+        if (src) {
+            const f = parseUrlToFields(src)
+            setIpField(f.ip || '')
+            setPortField(f.port || '')
+            setPathField(f.path || '')
+        } else {
+            setIpField('')
+            setPortField('')
+            setPathField('')
+        }
+        setFormError('')
+        setModalOpen(true)
+    }, [feedVideoSrc, internalStreamUrl])
+
+    const closeModal = useCallback(() => setModalOpen(false), [])
+
+    const applyConnect = useCallback(() => {
+        const url = buildStreamUrl(ipField, portField, pathField)
+        if (!url) {
+            setFormError(t('dashboard.camera_connect.invalid'))
+            return
+        }
+        setFormError('')
+        setStreamLoadError(false)
+        try {
+            localStorage.setItem(STORAGE_KEY, url)
+        } catch {
+            /* ignore */
+        }
+        setInternalStreamUrl(url)
+        setModalOpen(false)
+    }, [ipField, portField, pathField, t])
+
+    const disconnectStream = useCallback(() => {
+        try {
+            localStorage.removeItem(STORAGE_KEY)
+        } catch {
+            /* ignore */
+        }
+        setInternalStreamUrl('')
+        setStreamLoadError(false)
+        setModalOpen(false)
+    }, [])
+
+    useEffect(() => {
+        setStreamLoadError(false)
+    }, [effectiveVideoSrc])
+
+    useEffect(() => {
+        if (!modalOpen || typeof document === 'undefined') return
+        const onKey = (e) => {
+            if (e.key === 'Escape') setModalOpen(false)
+        }
+        document.addEventListener('keydown', onKey)
+        return () => document.removeEventListener('keydown', onKey)
+    }, [modalOpen])
+
+    const useVideoTag = useMemo(() => {
+        if (!effectiveVideoSrc) return false
+        if (isProbablyVideoContainer(effectiveVideoSrc)) return true
+        if (isProbablyMjpegOrImageStream(effectiveVideoSrc)) return false
+        return true
+    }, [effectiveVideoSrc])
 
     const syncMic = useCallback(
         (on) => {
@@ -111,44 +258,234 @@ const CameraFeed = forwardRef(function CameraFeed(
             'background 0.2s ease, border-color 0.2s ease, box-shadow var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
     }
 
-    return (
-        <div
-            ref={rootRef}
-            className={`deploy-camera-feed ${className}`.trim()}
-            style={{
-                position: 'relative',
-                width: '100%',
-                height: '100%',
-                minHeight: 0,
-                overflow: 'hidden',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'var(--camera-feed-bg)',
-                transition: 'background var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
-                ...style,
-            }}
-        >
+    const labelBtnStyle = {
+        color: 'var(--camera-feed-label-color)',
+        fontSize: '0.78rem',
+        padding: '0.2rem 0.5rem',
+        border: '1px solid var(--camera-feed-label-border)',
+        borderRadius: 6,
+        background: 'var(--camera-feed-label-bg)',
+        boxShadow: 'var(--camera-feed-label-shadow)',
+        transition: 'box-shadow var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+        cursor: 'pointer',
+        font: 'inherit',
+    }
+
+    const hasMediaLayer = Boolean(effectiveVideoSrc || feedImageSrc)
+
+    const modal =
+        modalOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
             <div
-                style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'var(--camera-feed-overlay)',
-                    opacity: 1,
-                    transition: 'background var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                className="pair-devices-overlay"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="camera-connect-title"
+                onMouseDown={(e) => {
+                    if (e.target === e.currentTarget) closeModal()
                 }}
             >
+                <div className="glass-panel pair-devices-modal" onMouseDown={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+                    <div className="pair-devices-modal__head">
+                        <div className="pair-devices-modal__title-wrap">
+                            <Video size={22} aria-hidden className="pair-devices-modal__ico" />
+                            <div>
+                                <h2 id="camera-connect-title" className="pair-devices-modal__title">
+                                    {t('dashboard.camera_connect.modal_title')}
+                                </h2>
+                                <p className="pair-devices-modal__lede" style={{ marginBottom: 0 }}>
+                                    {t('dashboard.camera_connect.hint')}
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" className="pair-devices-modal__close" onClick={closeModal} aria-label={t('dashboard.camera_connect.cancel')}>
+                            ×
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.82rem' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>{t('dashboard.camera_connect.ip_label')}</span>
+                            <input
+                                type="text"
+                                className="account-form-input"
+                                dir="ltr"
+                                autoComplete="off"
+                                placeholder={t('dashboard.camera_connect.ip_placeholder')}
+                                value={ipField}
+                                onChange={(e) => setIpField(e.target.value)}
+                            />
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.82rem' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>{t('dashboard.camera_connect.port_label')}</span>
+                                <input
+                                    type="text"
+                                    className="account-form-input"
+                                    dir="ltr"
+                                    inputMode="numeric"
+                                    placeholder={t('dashboard.camera_connect.port_placeholder')}
+                                    value={portField}
+                                    onChange={(e) => setPortField(e.target.value)}
+                                />
+                            </label>
+                            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.82rem' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>{t('dashboard.camera_connect.path_label')}</span>
+                                <input
+                                    type="text"
+                                    className="account-form-input"
+                                    dir="ltr"
+                                    placeholder={t('dashboard.camera_connect.path_placeholder')}
+                                    value={pathField}
+                                    onChange={(e) => setPathField(e.target.value)}
+                                />
+                            </label>
+                        </div>
+                        {formError ? (
+                            <p style={{ margin: 0, fontSize: '0.82rem', color: '#f87171' }}>{formError}</p>
+                        ) : null}
+
+                        <div className="pair-devices-modal__actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem' }}>
+                            <button type="button" className="account-form-btn account-form-btn--primary" onClick={applyConnect}>
+                                {t('dashboard.camera_connect.connect')}
+                            </button>
+                            {internalStreamUrl ? (
+                                <button type="button" className="account-form-btn" onClick={disconnectStream}>
+                                    {t('dashboard.camera_connect.disconnect')}
+                                </button>
+                            ) : null}
+                            <button type="button" className="account-form-btn" onClick={closeModal}>
+                                {t('dashboard.camera_connect.cancel')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>,
+            document.body
+        )
+
+    return (
+        <>
+            {modal}
+            <div
+                ref={rootRef}
+                className={`deploy-camera-feed ${className}`.trim()}
+                style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%',
+                    minHeight: 0,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'var(--camera-feed-bg)',
+                    transition: 'background var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                    ...style,
+                }}
+            >
+                {effectiveVideoSrc && useVideoTag ? (
+                    <video
+                        key={effectiveVideoSrc}
+                        src={effectiveVideoSrc}
+                        poster={feedVideoPoster}
+                        autoPlay
+                        muted
+                        playsInline
+                        preload="auto"
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            zIndex: 1,
+                            opacity: 'var(--camera-feed-video-opacity, 0.98)',
+                            filter: 'var(--camera-feed-video-filter, none)',
+                        }}
+                        onError={() => setStreamLoadError(true)}
+                    />
+                ) : effectiveVideoSrc && !useVideoTag ? (
+                    <img
+                        key={effectiveVideoSrc}
+                        src={effectiveVideoSrc}
+                        alt=""
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            zIndex: 1,
+                            opacity: 'var(--camera-feed-image-opacity, 0.95)',
+                            filter: 'var(--camera-feed-image-filter, none)',
+                        }}
+                        draggable={false}
+                        onError={() => setStreamLoadError(true)}
+                    />
+                ) : feedImageSrc ? (
+                    <img
+                        src={feedImageSrc}
+                        alt={feedImageAlt}
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            objectPosition: feedImageObjectPosition,
+                            zIndex: 1,
+                            opacity: 'var(--camera-feed-image-opacity, 0.95)',
+                            filter: 'var(--camera-feed-image-filter, none)',
+                        }}
+                        draggable={false}
+                    />
+                ) : null}
+
+                {streamLoadError && effectiveVideoSrc ? (
+                    <div
+                        role="alert"
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            zIndex: 15,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '1rem',
+                            textAlign: 'center',
+                            fontSize: '0.85rem',
+                            color: 'rgba(248,250,252,0.92)',
+                            background: 'rgba(15,23,42,0.72)',
+                        }}
+                    >
+                        {t('dashboard.camera_connect.load_failed')}
+                    </div>
+                ) : null}
+
                 <div
                     style={{
-                        width: '100%',
-                        height: '100%',
-                        backgroundImage: 'var(--camera-feed-grid)',
-                        backgroundSize: 'var(--camera-feed-grid-size, 20px 20px, 24px 24px, 24px 24px, 12px 12px)',
-                        opacity: 'var(--camera-feed-grid-opacity, 0.52)',
-                        transition: 'opacity var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'var(--camera-feed-overlay)',
+                        opacity: hasMediaLayer ? 0.55 : 1,
+                        transition: 'background var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                        zIndex: 3,
+                        pointerEvents: 'none',
                     }}
-                />
-            </div>
+                >
+                    <div
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            backgroundImage: 'var(--camera-feed-grid)',
+                            backgroundSize: 'var(--camera-feed-grid-size, 20px 20px, 24px 24px, 24px 24px, 12px 12px)',
+                            opacity: hasMediaLayer ? 0.28 : 'var(--camera-feed-grid-opacity, 0.52)',
+                            transition: 'opacity var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                        }}
+                    />
+                </div>
 
                 <div
                     aria-hidden
@@ -162,123 +499,137 @@ const CameraFeed = forwardRef(function CameraFeed(
                     }}
                 />
 
-            <div
-                style={{
-                    position: 'relative',
-                    zIndex: 10,
-                    textAlign: 'center',
-                    color: 'var(--camera-feed-chrome-color)',
-                }}
-            >
-                <Video
-                    size={40}
-                    style={{
-                        marginBottom: '0.5rem',
-                        opacity: 'var(--camera-feed-chrome-icon-opacity, 0.55)',
-                        filter: 'var(--camera-feed-icon-filter, drop-shadow(0 1px 2px rgba(0,0,0,0.35)))',
-                        transition: 'filter var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
-                    }}
-                    aria-hidden
-                />
-                <p style={{ fontFamily: 'var(--font-heading)', fontSize: '0.85rem', margin: 0, fontWeight: 600, letterSpacing: '-0.02em' }}>{cameraLabel}</p>
-                <p style={{ fontSize: '0.72rem', margin: '0.25rem 0 0', color: 'var(--camera-feed-chrome-muted)' }}>{cameraZone}</p>
-            </div>
-
-            {showChrome ? (
-                <>
-                    <div
+                {!effectiveVideoSrc && !feedImageSrc ? (
+                    <button
+                        type="button"
+                        onClick={openConnectModal}
+                        aria-label={t('dashboard.camera_connect.open_aria')}
                         style={{
-                            position: 'absolute',
-                            top: '1rem',
-                            left: '1rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.65rem',
-                            zIndex: 20,
+                            position: 'relative',
+                            zIndex: 10,
+                            textAlign: 'center',
+                            color: 'var(--camera-feed-chrome-color)',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '0.75rem 1rem',
+                            font: 'inherit',
+                            maxWidth: 'min(100%, 280px)',
                         }}
                     >
-                        <div
+                        <Video
+                            size={40}
                             style={{
-                                padding: '0.25rem 0.55rem',
-                                background: 'var(--camera-feed-live-bg)',
-                                border: '1px solid var(--camera-feed-live-border)',
-                                borderRadius: 6,
-                                boxShadow: 'var(--camera-feed-live-shadow)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.35rem',
-                                color: 'var(--camera-feed-live-fg)',
-                                fontSize: '0.65rem',
-                                fontWeight: 800,
-                                letterSpacing: '0.1em',
-                                transition: 'box-shadow var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                                marginBottom: '0.5rem',
+                                opacity: 'var(--camera-feed-chrome-icon-opacity, 0.55)',
+                                filter: 'var(--camera-feed-icon-filter, drop-shadow(0 1px 2px rgba(0,0,0,0.35)))',
+                                transition: 'filter var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                                display: 'block',
+                                marginLeft: 'auto',
+                                marginRight: 'auto',
                             }}
-                        >
-                            <span
-                                style={{
-                                    width: 6,
-                                    height: 6,
-                                    borderRadius: '50%',
-                                    background: 'var(--camera-feed-live-dot)',
-                                    boxShadow: '0 0 6px color-mix(in srgb, var(--camera-feed-live-dot) 55%, transparent)',
-                                }}
-                                aria-hidden
-                            />
-                            LIVE
-                        </div>
-                        <span
+                            aria-hidden
+                        />
+                        <p
                             style={{
-                                color: 'var(--camera-feed-label-color)',
-                                fontSize: '0.78rem',
-                                padding: '0.2rem 0.5rem',
-                                border: '1px solid var(--camera-feed-label-border)',
-                                borderRadius: 6,
-                                background: 'var(--camera-feed-label-bg)',
-                                boxShadow: 'var(--camera-feed-label-shadow)',
-                                transition: 'box-shadow var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                                fontFamily: 'var(--font-heading)',
+                                fontSize: '0.85rem',
+                                margin: 0,
+                                fontWeight: 600,
+                                letterSpacing: '-0.02em',
                             }}
                         >
                             {cameraLabel}
-                        </span>
-                    </div>
+                        </p>
+                        <p style={{ fontSize: '0.72rem', margin: '0.25rem 0 0', color: 'var(--camera-feed-chrome-muted)' }}>{cameraZone}</p>
+                    </button>
+                ) : null}
 
-                    <div
-                        style={{
-                            position: 'absolute',
-                            bottom: '1rem',
-                            right: '1rem',
-                            display: 'flex',
-                            gap: '0.5rem',
-                            zIndex: 20,
-                        }}
-                    >
-                        <button
-                            type="button"
+                {showChrome ? (
+                    <>
+                        <div
                             style={{
-                                ...btnBase,
-                                borderColor: micActive ? 'var(--camera-feed-mic-active-border)' : 'var(--camera-feed-btn-border)',
-                                background: micActive ? 'var(--camera-feed-mic-active-bg)' : 'var(--camera-feed-btn-bg)',
+                                position: 'absolute',
+                                top: '1rem',
+                                left: '1rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.65rem',
+                                zIndex: 20,
                             }}
-                            aria-label={micActive ? 'Mute microphone' : 'Unmute microphone'}
-                            aria-pressed={micActive}
-                            title={micActive ? 'Turn off microphone' : 'Two-way audio (microphone)'}
-                            onClick={() => void toggleMic()}
                         >
-                            <Mic size={16} aria-hidden />
-                        </button>
-                        <button
-                            type="button"
-                            style={btnBase}
-                            aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-                            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-                            onClick={() => void toggleFullscreen()}
+                            <div
+                                style={{
+                                    padding: '0.25rem 0.55rem',
+                                    background: 'var(--camera-feed-live-bg)',
+                                    border: '1px solid var(--camera-feed-live-border)',
+                                    borderRadius: 6,
+                                    boxShadow: 'var(--camera-feed-live-shadow)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    color: 'var(--camera-feed-live-fg)',
+                                    fontSize: '0.65rem',
+                                    fontWeight: 800,
+                                    letterSpacing: '0.1em',
+                                    transition: 'box-shadow var(--theme-crossfade-duration) var(--theme-crossfade-ease)',
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        width: 6,
+                                        height: 6,
+                                        borderRadius: '50%',
+                                        background: 'var(--camera-feed-live-dot)',
+                                        boxShadow: '0 0 6px color-mix(in srgb, var(--camera-feed-live-dot) 55%, transparent)',
+                                    }}
+                                    aria-hidden
+                                />
+                                LIVE
+                            </div>
+                            <button type="button" style={labelBtnStyle} onClick={openConnectModal} aria-label={t('dashboard.camera_connect.open_aria')}>
+                                {cameraLabel}
+                            </button>
+                        </div>
+
+                        <div
+                            style={{
+                                position: 'absolute',
+                                bottom: '1rem',
+                                right: '1rem',
+                                display: 'flex',
+                                gap: '0.5rem',
+                                zIndex: 20,
+                            }}
                         >
-                            {isFullscreen ? <Minimize2 size={16} aria-hidden /> : <Maximize2 size={16} aria-hidden />}
-                        </button>
-                    </div>
-                </>
-            ) : null}
-        </div>
+                            <button
+                                type="button"
+                                style={{
+                                    ...btnBase,
+                                    borderColor: micActive ? 'var(--camera-feed-mic-active-border)' : 'var(--camera-feed-btn-border)',
+                                    background: micActive ? 'var(--camera-feed-mic-active-bg)' : 'var(--camera-feed-btn-bg)',
+                                }}
+                                aria-label={micActive ? 'Mute microphone' : 'Unmute microphone'}
+                                aria-pressed={micActive}
+                                title={micActive ? 'Turn off microphone' : 'Two-way audio (microphone)'}
+                                onClick={() => void toggleMic()}
+                            >
+                                <Mic size={16} aria-hidden />
+                            </button>
+                            <button
+                                type="button"
+                                style={btnBase}
+                                aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                                onClick={() => void toggleFullscreen()}
+                            >
+                                {isFullscreen ? <Minimize2 size={16} aria-hidden /> : <Maximize2 size={16} aria-hidden />}
+                            </button>
+                        </div>
+                    </>
+                ) : null}
+            </div>
+        </>
     )
 })
 

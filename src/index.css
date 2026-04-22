@@ -92,6 +92,8 @@
     --shell-gap: 0.45rem;
     --shell-frame-pad: 0.5rem 0.55rem 0.55rem;
     --shell-bottom-safe: 0.25rem;
+    /* Reserve space when nav dock is pinned to the bottom (tablet / phone) */
+    --sidebar-bottom-clearance: 0px;
 
     /* Fixed theme toggle — reserve space so main content does not sit underneath */
     --theme-toggle-h: 40px;
@@ -355,16 +357,16 @@ html {
     /* قبل hydration: يمنع شريط ويندوز/كروم الفاتح الافتراضي */
     color-scheme: dark;
     /* Firefox — لون أوضح قليلاً يقارب «الزجاج» (بدون تدرج حقيقي في المتصفح) */
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--text-muted) 62%, transparent) transparent;
+    scrollbar-width: none;
+    scrollbar-color: transparent transparent;
 }
 
 /* Chrome / Edge / Safari — لازم عنصر قبل ::-webkit-* + تغطية شريط الـ viewport على html */
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,
 *::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 0;
+    height: 0;
 }
 
 html::-webkit-scrollbar-track,
@@ -524,13 +526,14 @@ html[data-theme='light'] *::-webkit-scrollbar-thumb:hover {
     flex: 1;
     position: relative;
     z-index: 1;
+    outline: none;
     transition:
         color var(--theme-crossfade-duration) var(--theme-crossfade-ease),
         background-color var(--theme-crossfade-duration) var(--theme-crossfade-ease);
     padding-top: calc(env(safe-area-inset-top, 0px) + var(--shell-pad-y));
     padding-left: var(--shell-pad-x);
     padding-right: calc(env(safe-area-inset-right, 0px) + var(--shell-pad-x));
-    padding-bottom: calc(var(--shell-pad-y) + var(--shell-bottom-safe));
+    padding-bottom: calc(var(--shell-pad-y) + var(--shell-bottom-safe) + var(--sidebar-bottom-clearance));
     min-height: 100dvh;
     width: 100%;
     min-width: 0;
@@ -1702,4 +1705,208 @@ input[type='range']::-webkit-slider-runnable-track {
     font-size: 0.75rem;
     color: var(--text-muted);
     font-family: var(--font-mono);
+}
+
+/* Diagnostics — exported reports history modal layout */
+.diag-history-modal {
+    width: min(560px, 100%);
+}
+
+.diag-history-modal.glass-panel {
+    /* Cleaner, less "glowy" than default glass-panel */
+    background: rgba(14, 16, 22, 0.9);
+    border-color: rgba(255, 255, 255, 0.10);
+    box-shadow: 0 18px 46px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.diag-history-modal.glass-panel:hover {
+    box-shadow: 0 18px 46px rgba(0, 0, 0, 0.55);
+}
+
+.diag-history-list {
+    gap: 0.65rem;
+}
+
+.diag-history-row {
+    align-items: stretch;
+    gap: 0.9rem;
+    padding: 0.85rem 0.9rem;
+}
+
+.diag-history-row__meta {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.diag-history-row__id {
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: rgba(241, 245, 249, 0.95);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.diag-history-row__sub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+.diag-history-row__dot {
+    opacity: 0.7;
+}
+
+.diag-history-row .account-form-btn {
+    align-self: center;
+    min-height: 2.55rem;
+}
+
+/* Diagnostics — history modal subtle animation */
+.diag-history-overlay {
+    /* Important: no blur on the whole screen */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    /* Dim background (no fade to avoid "line" artifacts) */
+    background: rgba(0, 0, 0, 0.58);
+    opacity: 1;
+    animation: none;
+}
+
+.diag-history-overlay.is-closing {
+    animation: none;
+}
+
+.diag-history-modal {
+    transform-origin: 50% 45%;
+    animation: diagHistoryModalIn 140ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.diag-history-modal.is-closing {
+    animation: diagHistoryModalOut 140ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes diagHistoryOverlayIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes diagHistoryOverlayOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes diagHistoryModalIn {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 6px, 0) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+@keyframes diagHistoryModalOut {
+    from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate3d(0, 4px, 0) scale(0.99);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .diag-history-overlay,
+    .diag-history-overlay.is-closing,
+    .diag-history-modal,
+    .diag-history-modal.is-closing {
+        animation: none !important;
+    }
+}
+
+/* Outro screen (Q key) */
+.outro-screen-portal {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.outro-screen-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+}
+.outro-screen__line {
+    width: 2px;
+    height: 100px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 100%);
+    margin: 0.25rem 0;
+    transform-origin: top;
+}
+.outro-screen__thankyou {
+    margin: 0;
+    text-align: center;
+    font-size: 4.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 24px rgba(255, 255, 255, 0.15));
+}
+.outro-screen__thankyou-ar {
+    font-size: 3.8rem;
+    font-weight: 700;
+}
+.outro-screen__logo-wrap {
+    width: 140px;
+    height: 140px;
+    border-radius: 35%;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 0 12px rgba(125, 157, 168, 0.04), 0 24px 48px rgba(0, 0, 0, 0.6);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.outro-screen__logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.outro-screen__brand {
+    margin: 0;
+    font-size: 2.25rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: rgba(226, 232, 240, 0.95);
+    text-transform: uppercase;
 }

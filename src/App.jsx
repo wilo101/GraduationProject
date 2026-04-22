@@ -14,6 +14,7 @@ import Terms from './pages/Terms'
 import SplashScreen from './components/SplashScreen'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
+import OutroScreen from './components/OutroScreen'
 import './styles/theme-light-overrides.css'
 
 // Placeholder Pages for future implementation
@@ -75,6 +76,7 @@ function App() {
                 </Routes>
             </Router>
             )}
+            <OutroScreen />
         </AuthProvider>
     )
 }

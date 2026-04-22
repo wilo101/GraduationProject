@@ -16,6 +16,17 @@ function zoneCenter(room) {
     return { x: room.x + room.w / 2, y: room.y + room.h / 2 }
 }
 
+function incidentAnchor(room) {
+    // Match incident marker placement (top-right-ish inside room)
+    return { x: room.x + room.w - 6, y: room.y + 6 }
+}
+
+function missionTarget(room, mapMission) {
+    if (!room) return { x: 35, y: 40 }
+    if (mapMission?.target === 'incident') return incidentAnchor(room)
+    return zoneCenter(room)
+}
+
 function easeOutCubic(t) {
     return 1 - Math.pow(1 - t, 3)
 }
@@ -24,9 +35,11 @@ function easeOutCubic(t) {
 const defaultWind = { degFromNorth: 38, speedKmh: 14 }
 
 const HouseMap = ({
-    layers = { grid: true, labels: true, robot: true, sensors: false, wind: true, pathHistory: true },
+    layers = { grid: true, labels: true, robot: true, sensors: false, wind: true },
     selectedRoomId,
     flashZoneId = null,
+    /** Operator incidents (e.g. fire) to render on the map */
+    incidents = [],
     /** Active map command from operator (deploy / navigate / scan) */
     mapMission = null,
     onMapMissionComplete,
@@ -38,6 +51,8 @@ const HouseMap = ({
     const [trail, setTrail] = useState([{ x: 35, y: 40 }])
     const [robotRot, setRobotRot] = useState(45)
     const [scanningZoneId, setScanningZoneId] = useState(null)
+    const [scanMode, setScanMode] = useState('scan')
+    const [robotMode, setRobotMode] = useState('idle') // idle | moving | extinguishing
 
     const tRef = useRef(0)
     const trailRef = useRef(trail)
@@ -81,6 +96,7 @@ const HouseMap = ({
     /** Move robot to sector (deploy = slower path) */
     useEffect(() => {
         if (!mapMission || mapMission.action === 'scan') return undefined
+        if (mapMission.action === 'extinguish') return undefined
 
         const room = roomById[mapMission.zoneId]
         if (!room) {
@@ -89,9 +105,10 @@ const HouseMap = ({
         }
 
         pauseDriftRef.current = true
+        setRobotMode('moving')
         if (moveRafRef.current) cancelAnimationFrame(moveRafRef.current)
 
-        const target = zoneCenter(room)
+        const target = missionTarget(room, mapMission)
         const start = { ...(trailRef.current[trailRef.current.length - 1] || { x: 35, y: 40 }) }
         movePrevRef.current = { ...start }
         const duration = mapMission.action === 'deploy' ? 3200 : 2200
@@ -122,6 +139,7 @@ const HouseMap = ({
             } else {
                 moveRafRef.current = 0
                 pauseDriftRef.current = false
+                setRobotMode('idle')
                 onMapMissionComplete?.({ ...mapMission, ok: true })
             }
         }
@@ -132,12 +150,13 @@ const HouseMap = ({
             if (moveRafRef.current) cancelAnimationFrame(moveRafRef.current)
             moveRafRef.current = 0
             pauseDriftRef.current = false
+            setRobotMode('idle')
         }
     }, [mapMission, roomById, onMapMissionComplete])
 
-    /** Sector scan — visual sweep on zone */
+    /** Sector scan / extinguish — visual sweep on zone */
     useEffect(() => {
-        if (!mapMission || mapMission.action !== 'scan') return undefined
+        if (!mapMission || (mapMission.action !== 'scan' && mapMission.action !== 'extinguish')) return undefined
 
         const room = roomById[mapMission.zoneId]
         if (!room) {
@@ -146,17 +165,27 @@ const HouseMap = ({
         }
 
         pauseDriftRef.current = true
+        setScanMode(mapMission.action === 'extinguish' ? 'extinguish' : 'scan')
+        setRobotMode(mapMission.action === 'extinguish' ? 'extinguishing' : 'idle')
         setScanningZoneId(mapMission.zoneId)
+
+        if (mapMission.action === 'extinguish') {
+            const target = missionTarget(room, mapMission)
+            setTrail((cur) => [...cur, { x: target.x, y: target.y }].slice(-96))
+        }
+
         const id = window.setTimeout(() => {
             setScanningZoneId(null)
             pauseDriftRef.current = false
+            setRobotMode('idle')
             onMapMissionComplete?.({ ...mapMission, ok: true })
-        }, 2600)
+        }, mapMission.action === 'extinguish' ? 4200 : 2600)
 
         return () => {
             window.clearTimeout(id)
             setScanningZoneId(null)
             pauseDriftRef.current = false
+            setRobotMode('idle')
         }
     }, [mapMission, roomById, onMapMissionComplete])
 
@@ -271,7 +300,7 @@ const HouseMap = ({
                         {scanning ? (
                             <div className="house-map__scan-overlay" aria-hidden>
                                 <div className="house-map__scan-sweep" />
-                                <span className="house-map__scan-label">Scanning…</span>
+                                <span className="house-map__scan-label">{scanMode === 'extinguish' ? 'Extinguishing…' : 'Scanning…'}</span>
                             </div>
                         ) : null}
                     </div>
@@ -286,15 +315,15 @@ const HouseMap = ({
                     style={{ zIndex: 11, pointerEvents: 'none' }}
                     aria-hidden
                 >
-                    {layers?.pathHistory && trail.length > 2 ? (
-                        <path
-                            d={`M ${trail.map((p) => `${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' L ')}`}
+                    {trail.length >= 2 ? (
+                        <polyline
+                            points={trail.map((p) => `${p.x},${p.y}`).join(' ')}
                             fill="none"
                             stroke="rgba(125, 157, 168, 0.45)"
-                            strokeWidth="0.5"
-                            strokeLinecap="round"
+                            strokeWidth="0.35"
                             strokeLinejoin="round"
-                            opacity="0.72"
+                            strokeLinecap="round"
+                            opacity="0.55"
                         />
                     ) : null}
                 </svg>
@@ -327,9 +356,43 @@ const HouseMap = ({
                   })
                 : null}
 
+            {incidents?.length
+                ? incidents.map((m) => {
+                      const room = roomById[m.zoneId]
+                      if (!room) return null
+                      const x = room.x + room.w - 6
+                      const y = room.y + 6
+                      const Icon = m.icon || Flame
+                      const level = m.level || 'critical'
+                      const isCritical = level === 'critical'
+                      const isWarning = level === 'warning'
+                      const bg = isCritical ? 'rgba(239, 68, 68, 0.18)' : isWarning ? 'rgba(245, 158, 11, 0.16)' : 'rgba(148, 163, 184, 0.12)'
+                      const border = isCritical ? 'rgba(239, 68, 68, 0.5)' : isWarning ? 'rgba(245, 158, 11, 0.45)' : 'rgba(148, 163, 184, 0.3)'
+                      const fg = isCritical ? 'rgba(254, 202, 202, 0.98)' : isWarning ? 'rgba(253, 230, 138, 0.95)' : 'rgba(226, 232, 240, 0.9)'
+                      return (
+                          <div
+                              key={m.id}
+                              title={m.label}
+                              className="house-map__sensor"
+                              style={{
+                                  left: `${x}%`,
+                                  top: `${y}%`,
+                                  background: bg,
+                                  borderColor: border,
+                                  color: fg,
+                                  zIndex: 18,
+                                  boxShadow: isCritical ? '0 0 0 1px rgba(239, 68, 68, 0.18), 0 0 22px rgba(239, 68, 68, 0.12)' : undefined,
+                              }}
+                          >
+                              <Icon size={14} aria-hidden />
+                          </div>
+                      )
+                  })
+                : null}
+
             {layers?.robot ? (
                 <div
-                    className="house-map__robot"
+                    className={`house-map__robot${robotMode === 'moving' ? ' house-map__robot--moving' : ''}${robotMode === 'extinguishing' ? ' house-map__robot--extinguishing' : ''}`}
                     style={{
                         left: `${lastPt.x}%`,
                         top: `${lastPt.y}%`,

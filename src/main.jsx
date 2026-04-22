@@ -12,6 +12,7 @@ import './styles/sidebar.css'
 import './styles/manual-override.css'
 import './styles/diagnostics.css'
 import './styles/ops-ui.css'
+import './styles/tablet-responsive.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>

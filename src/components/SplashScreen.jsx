@@ -102,9 +102,8 @@ export default function SplashScreen({
 
     return (
         <div
-            className={`splash-screen${isExiting ? ' splash-screen--exiting' : ''}`}
+            className={`splash-screen auth-shell--3d${isExiting ? ' splash-screen--exiting' : ''}`}
             style={{
-                '--splash-photo': `url(${SPLASH_PHOTO})`,
                 transition: `opacity ${fadeMs}ms ease-out`,
                 opacity: isExiting ? 0 : 1,
             }}
@@ -113,11 +112,15 @@ export default function SplashScreen({
             aria-live="polite"
             aria-label="Augustus OS startup"
         >
-            <div className="splash-screen__photo" aria-hidden />
-            <div className="splash-screen__mesh" aria-hidden />
-            <div className="splash-screen__grid" aria-hidden />
-            <div className="splash-screen__ambient splash-screen__ambient--tl" aria-hidden />
-            <div className="splash-screen__ambient splash-screen__ambient--br" aria-hidden />
+            <div className="auth-shell__stage" aria-hidden>
+                <div className="auth-shell__stage-bg" />
+                <div className="auth-shell__stage-fog" />
+                <div className="auth-shell__stage-weave" />
+                <div className="auth-shell__stage-grid" />
+                <div className="auth-shell__stage-sheen" />
+                <div className="auth-shell__stage-grain" />
+                <div className="auth-shell__stage-grain auth-shell__stage-grain--fine" />
+            </div>
 
             <button type="button" className="splash-skip" onClick={handleSkip}>
                 Skip

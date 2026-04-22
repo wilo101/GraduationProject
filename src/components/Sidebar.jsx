@@ -21,7 +21,9 @@ export default function Sidebar() {
     return (
         <aside className="sidebar-dock" aria-label="Main navigation">
             <div className="sidebar-dock__mark">
-                <img src={logo} alt="Augustus OS" width={44} height={44} />
+                <NavLink to="/" end className="sidebar-dock__mark-btn" aria-label={t('nav.overview')} title={t('nav.overview')}>
+                    <img src={logo} alt="" width={44} height={44} aria-hidden />
+                </NavLink>
             </div>
 
             <div className="sidebar-dock__rule" aria-hidden />

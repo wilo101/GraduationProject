@@ -136,7 +136,7 @@ const Dashboard = () => {
                 <div className="dashboard-frame__inner">
                     <div className="dashboard-frame__grid">
                         <div className="dashboard-frame__camera">
-                            <CameraFeed />
+                            <CameraFeed cameraLabel={t('dashboard.camera_feed_alt', 'Camera feed')} />
                         </div>
                         <div className="dashboard-frame__cards">
                             <StatusCard
@@ -181,7 +181,7 @@ const Dashboard = () => {
                     </div>
 
                     <div className="dashboard-frame__map">
-                        <HouseMap />
+                        <HouseMap incidents={[]} selectedRoomId={null} flashZoneId={null} mapMission={null} />
                     </div>
                 </div>
             </div>

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import diagnosticsPrintWindowCss from '../styles/diagnostics-print-window.css?raw'
 import {
     CheckCircle,
     Cpu,
@@ -12,6 +11,8 @@ import {
     XCircle,
     ShieldCheck,
     Printer,
+    History,
+    X,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -38,8 +39,12 @@ export default function SystemDiagnostics() {
     const [mode, setMode] = useState('idle') // 'idle' | 'all' | 'single'
     const [targetId, setTargetId] = useState(null)
     const [expandedRows, setExpandedRows] = useState({})
+    const [reportHistory, setReportHistory] = useState(() => JSON.parse(localStorage.getItem('diag_history') || '[]'))
+    const [historyOpen, setHistoryOpen] = useState(false)
+    const [historyClosing, setHistoryClosing] = useState(false)
     const timerRef = useRef(null)
     const printReportRef = useRef(null)
+    const [printRecord, setPrintRecord] = useState(null)
 
     const progress = useMemo(() => Math.min(Math.round((activeItem / systemsSeed.length) * 100), 100), [activeItem])
     const complete = activeItem >= systemsSeed.length && !running
@@ -167,44 +172,59 @@ export default function SystemDiagnostics() {
 
     const exportReport = () => {
         if (!complete) return
-        const el = printReportRef.current
-        if (!el) return
 
-        const clone = el.cloneNode(true)
-        clone.removeAttribute('aria-hidden')
-        const html = clone.outerHTML
-
-        const w = window.open('', 'diag-export', 'noopener,noreferrer,width=100,height=80')
-        if (!w) {
-            void el.offsetHeight
-            requestAnimationFrame(() => window.print())
-            return
-        }
-
-        const doc = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Diagnostics report</title><style>${diagnosticsPrintWindowCss}</style></head><body>${html}</body></html>`
-        w.document.open()
-        w.document.write(doc)
-        w.document.close()
-
-        const onAfterPrint = () => {
-            w.removeEventListener('afterprint', onAfterPrint)
-            w.close()
-        }
-        w.addEventListener('afterprint', onAfterPrint)
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                try {
-                    w.focus()
-                    w.print()
-                } catch {
-                    w.removeEventListener('afterprint', onAfterPrint)
-                    w.close()
-                    requestAnimationFrame(() => window.print())
-                }
-            })
+        setPrintRecord(null)
+        setReportHistory((curr) => {
+            if (curr.some((r) => r.id === reportDocId)) return curr
+            
+            const el = printReportRef.current
+            const htmlStr = el ? el.innerHTML : ''
+            
+            const record = {
+                id: reportDocId,
+                date: lastRunAt.toISOString(),
+                startedAt: runStartedAt.toISOString(),
+                duration: durationLabel,
+                verdict: overallResult,
+                pass: passCount,
+                fail: failCount,
+                total: systemsSeed.length,
+                html: htmlStr,
+            }
+            const next = [record, ...curr].slice(0, 10)
+            localStorage.setItem('diag_history', JSON.stringify(next))
+            return next
         })
+
+        setTimeout(() => window.print(), 50)
     }
+
+    const viewPastReport = (record) => {
+        setPrintRecord(record)
+        setTimeout(() => window.print(), 100)
+    }
+
+    const clearHistory = () => {
+        setReportHistory([])
+        localStorage.removeItem('diag_history')
+    }
+
+    const requestCloseHistory = () => {
+        setHistoryClosing(true)
+        window.setTimeout(() => {
+            setHistoryOpen(false)
+            setHistoryClosing(false)
+        }, 140)
+    }
+
+    useEffect(() => {
+        if (!historyOpen) return
+        const onKeyDown = (e) => {
+            if (e.key === 'Escape') requestCloseHistory()
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [historyOpen])
 
     useEffect(() => () => stop(), [])
 
@@ -250,6 +270,20 @@ export default function SystemDiagnostics() {
                     >
                         <Printer size={18} aria-hidden />
                         {t('diagnostics.actions.export')}
+                    </button>
+                    <button
+                        className="auth-social-btn"
+                        type="button"
+                        onClick={() => (historyOpen ? requestCloseHistory() : setHistoryOpen(true))}
+                        style={{
+                            width: 'auto',
+                            padding: '0.9rem 1.15rem',
+                            background: historyOpen ? 'rgba(255,255,255,0.1)' : undefined,
+                            opacity: reportHistory.length ? 1 : 0.7,
+                        }}
+                    >
+                        <History size={18} aria-hidden />
+                        {t('diagnostics.actions.history')}
                     </button>
                 </div>
             </header>
@@ -410,12 +444,87 @@ export default function SystemDiagnostics() {
                         })}
                     </div>
                 </section>
+
                 </div>
             </div>
 
+            {historyOpen || historyClosing ? (
+                <div
+                    className={`pair-devices-overlay diag-history-overlay${historyClosing ? ' is-closing' : ''}`}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={t('diagnostics.past_reports_title')}
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget) requestCloseHistory()
+                    }}
+                >
+                    <div
+                        className={`glass-panel pair-devices-modal diag-history-modal${historyClosing ? ' is-closing' : ''}`}
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
+                        <div className="pair-devices-modal__head">
+                            <div className="pair-devices-modal__title-wrap">
+                                <History size={22} aria-hidden className="pair-devices-modal__ico" />
+                                <div>
+                                    <h2 className="pair-devices-modal__title">{t('diagnostics.past_reports_title')}</h2>
+                                    <p className="pair-devices-modal__lede" dir="auto">
+                                        {reportHistory.length
+                                            ? `${reportHistory.length} report${reportHistory.length === 1 ? '' : 's'} saved on this device.`
+                                            : 'No exported reports yet.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                className="pair-devices-modal__close"
+                                onClick={requestCloseHistory}
+                                aria-label="Close"
+                            >
+                                <X size={20} aria-hidden />
+                            </button>
+                        </div>
+
+                        {reportHistory.length ? (
+                            <>
+                                <div className="pair-devices-list diag-history-list">
+                                    {reportHistory.map((record) => (
+                                        <div key={record.id} className="pair-devices-list__row diag-history-row">
+                                            <div className="diag-history-row__meta">
+                                                <div className="diag-history-row__id">{record.id}</div>
+                                                <div className="diag-history-row__sub">
+                                                    <span className="diag-history-row__date">{new Date(record.date).toLocaleString()}</span>
+                                                    <span className="diag-history-row__dot" aria-hidden>
+                                                        ·
+                                                    </span>
+                                                    <span className="diag-history-row__counts">
+                                                        {record.pass} pass, {record.fail} fail
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className="account-form-btn account-form-btn--primary"
+                                                onClick={() => viewPastReport(record)}
+                                                style={{ width: 'auto', padding: '0.55rem 0.75rem', whiteSpace: 'nowrap' }}
+                                            >
+                                                <Printer size={16} aria-hidden style={{ marginRight: '0.35rem' }} />
+                                                {t('diagnostics.actions.view')}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        ) : null}
+                    </div>
+                </div>
+            ) : null}
+
             {/* Print / PDF certificate (off-screen; shown for print + PDF capture) */}
-            <section ref={printReportRef} id="diag-print-report" className="diag-report" aria-hidden="true">
-                <header className="diag-rpt-header diag-rpt-block">
+            {printRecord && printRecord.html ? (
+                <section id="diag-print-report" className="diag-report" aria-hidden="true" dangerouslySetInnerHTML={{ __html: printRecord.html }} />
+            ) : (
+                <section ref={printReportRef} id="diag-print-report" className="diag-report" aria-hidden="true">
+                    <header className="diag-rpt-header diag-rpt-block">
                     <div className="diag-rpt-brand">
                         <div className="diag-rpt-seal" aria-hidden>
                             <ShieldCheck size={22} strokeWidth={2} />
@@ -543,7 +652,8 @@ export default function SystemDiagnostics() {
                         </div>
                     </div>
                 </footer>
-            </section>
+                </section>
+            )}
         </div>
     )
 }

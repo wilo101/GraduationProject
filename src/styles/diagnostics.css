@@ -68,6 +68,10 @@
     letter-spacing: -0.03em;
     font-size: clamp(2rem, 3.8vw, 3rem);
     margin: 0 0 0.35rem 0;
+    text-shadow: none;
+    filter: none;
+    -webkit-text-stroke: 0 transparent;
+    text-rendering: geometricPrecision;
 }
 
 .diag-sub {

@@ -73,7 +73,6 @@ export default function MapView() {
         robot: true,
         sensors: false,
         wind: true,
-        pathHistory: true,
     })
     const [robotZoneId, setRobotZoneId] = useState('yard')
     const [robotMoving, setRobotMoving] = useState(false)
@@ -258,7 +257,6 @@ export default function MapView() {
                                     ['grid', t('map.layers.grid')],
                                     ['labels', t('map.layers.labels')],
                                     ['robot', t('map.layers.robot')],
-                                    ['pathHistory', t('map.layers.pathHistory')],
                                     ['wind', t('map.layers.wind')],
                                     ['sensors', t('map.layers.sensors')],
                                 ].map(([key, label]) => (

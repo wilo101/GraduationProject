@@ -780,15 +780,47 @@
     pointer-events: none;
 }
 
+@keyframes houseMapRobotPulse {
+    0%,
+    100% {
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(125, 157, 168, 0.18));
+        transform: scale(1);
+    }
+    50% {
+        filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 14px rgba(125, 157, 168, 0.28));
+        transform: scale(1.08);
+    }
+}
+
+@keyframes houseMapExtinguishPulse {
+    0%,
+    100% {
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 10px rgba(245, 158, 11, 0.22));
+        transform: scale(1.02);
+    }
+    50% {
+        filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.62)) drop-shadow(0 0 18px rgba(245, 158, 11, 0.34));
+        transform: scale(1.12);
+    }
+}
+
+.house-map__robot--moving .house-map__robot-marker {
+    animation: houseMapRobotPulse 0.85s ease-in-out infinite;
+}
+
+.house-map__robot--extinguishing .house-map__robot-marker {
+    animation: houseMapExtinguishPulse 0.75s ease-in-out infinite;
+}
+
 /* Single chevron = position + heading (no separate dot) */
 .house-map__robot-marker {
     position: absolute;
     left: 0;
     top: 0;
-    width: 12px;
-    height: 12px;
-    margin-left: -6px;
-    margin-top: -6px;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    margin-top: -9px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -800,9 +832,9 @@
     width: 0;
     height: 0;
     flex-shrink: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-bottom: 9px solid rgba(241, 245, 249, 0.96);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 13px solid rgba(241, 245, 249, 0.96);
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
 }
 
