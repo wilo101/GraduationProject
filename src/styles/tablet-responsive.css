@@ -47,6 +47,40 @@
     .deploy-control-deck {
         padding: 0.85rem 0.75rem 1rem;
     }
+
+    .ops-surface-frame {
+        padding: clamp(0.45rem, 1.8vw, 0.65rem) clamp(0.45rem, 1.8vw, 0.65rem) clamp(0.5rem, 2vw, 0.7rem);
+    }
+
+    .dashboard-frame__map {
+        min-height: clamp(220px, 32vh, 380px);
+    }
+
+    /* Settings / account-style panels */
+    .account-settings-panel {
+        padding-inline: clamp(0.25rem, 2vw, 0.5rem);
+    }
+
+    .auth-social-btn,
+    .account-form-btn {
+        touch-action: manipulation;
+        min-height: 44px;
+    }
+}
+
+/* Short landscape (iPad split view, phone landscape): less vertical map/camera pressure */
+@media screen and (max-width: 1024px) and (max-height: 520px) and (orientation: landscape) {
+    :root {
+        --sidebar-bottom-clearance: 5.15rem;
+    }
+
+    .dashboard-frame__camera {
+        min-height: clamp(200px, 36vh, 320px);
+    }
+
+    .dashboard-frame__map {
+        min-height: clamp(180px, 28vh, 280px);
+    }
 }
 
 /* Map status strip: 2×2 between phone (1 col) and desktop (4 col) */

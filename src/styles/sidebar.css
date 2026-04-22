@@ -267,6 +267,13 @@
         width: 2.65rem;
         height: 2.65rem;
         flex-shrink: 0;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(125, 157, 168, 0.15);
+    }
+
+    .sidebar-dock__mark-btn {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(125, 157, 168, 0.15);
     }
 
     /* Active pill under icon (horizontal dock) */
