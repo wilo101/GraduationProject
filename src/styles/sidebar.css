@@ -226,7 +226,8 @@
     background: rgba(148, 163, 184, 0.45);
 }
 
-@media screen and (max-width: 1024px) {
+/* Phones only — tablets use the same vertical dock as laptop */
+@media screen and (max-width: 767px) {
     /* Floating dock → bottom thumb bar (full-width content, safe areas) */
     .sidebar-dock {
         top: auto;

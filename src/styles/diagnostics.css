@@ -329,7 +329,7 @@
     }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 767px) {
     .diag-grid {
         grid-template-columns: 1fr;
     }

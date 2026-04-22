@@ -917,7 +917,7 @@
     box-shadow: none;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 767px) {
     .map-page__body {
         grid-template-columns: 1fr;
         min-height: auto;
