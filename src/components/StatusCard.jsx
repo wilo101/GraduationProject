@@ -17,7 +17,12 @@ const StatusCard = ({
 
     useEffect(() => {
         // Live-updating "Updated X min ago"
-        const t = setInterval(() => setNowTick(Date.now()), 15_000)
+        let intervalMs = 15_000
+        if (typeof window !== 'undefined' && window.matchMedia) {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) intervalMs = 60_000
+            else if (window.matchMedia('(pointer: coarse)').matches) intervalMs = 45_000
+        }
+        const t = setInterval(() => setNowTick(Date.now()), intervalMs)
         return () => clearInterval(t)
     }, [])
 

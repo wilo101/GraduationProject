@@ -14,6 +14,7 @@ import './styles/manual-override.css'
 import './styles/diagnostics.css'
 import './styles/ops-ui.css'
 import './styles/tablet-responsive.css'
+import './styles/tablet-one-screen.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
