@@ -1,0 +1,13 @@
+/* Fewer fullscreen blurs / filters on touch devices — noticeably lighter on tablets. */
+
+@media (hover: none) and (pointer: coarse) {
+    .sidebar-dock {
+        backdrop-filter: blur(14px) saturate(1.06);
+        -webkit-backdrop-filter: blur(14px) saturate(1.06);
+    }
+
+    .theme-toggle {
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+}

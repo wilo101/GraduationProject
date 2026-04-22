@@ -1,5 +1,5 @@
-import React from 'react'
-import { motion } from 'framer-motion'
+import React, { useEffect, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 
 const blobBase = {
     position: 'fixed',
@@ -9,7 +9,76 @@ const blobBase = {
     mixBlendMode: 'screen',
 }
 
+/** Static blobs — same mood, no infinite animation (better on tablet GPU). */
+function StaticBlueGradients() {
+    const blob = {
+        position: 'fixed',
+        borderRadius: '50%',
+        pointerEvents: 'none',
+        mixBlendMode: 'screen',
+        filter: 'blur(44px)',
+        willChange: 'auto',
+    }
+    return (
+        <div
+            aria-hidden
+            style={{
+                position: 'fixed',
+                inset: 0,
+                pointerEvents: 'none',
+                zIndex: 0,
+                overflow: 'hidden',
+            }}
+        >
+            <div
+                style={{
+                    ...blob,
+                    width: 'min(48vw, 520px)',
+                    height: 'min(48vw, 520px)',
+                    minWidth: 280,
+                    minHeight: 280,
+                    top: '-18%',
+                    left: '-14%',
+                    opacity: 0.4,
+                    background:
+                        'radial-gradient(circle at 38% 42%, rgba(82, 155, 255, 0.26), rgba(31, 87, 173, 0.06) 58%, transparent 76%)',
+                }}
+            />
+            <div
+                style={{
+                    ...blob,
+                    width: 'min(42vw, 460px)',
+                    height: 'min(42vw, 460px)',
+                    minWidth: 260,
+                    minHeight: 260,
+                    bottom: '-20%',
+                    right: '-12%',
+                    opacity: 0.3,
+                    background:
+                        'radial-gradient(circle at 50% 50%, rgba(69, 139, 255, 0.22), rgba(21, 67, 141, 0.05) 62%, transparent 78%)',
+                }}
+            />
+        </div>
+    )
+}
+
 export default function AnimatedBlueGradients() {
+    const reduceMotion = useReducedMotion()
+    const [coarsePointer, setCoarsePointer] = useState(false)
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !window.matchMedia) return undefined
+        const mq = window.matchMedia('(pointer: coarse)')
+        const sync = () => setCoarsePointer(mq.matches)
+        sync()
+        mq.addEventListener('change', sync)
+        return () => mq.removeEventListener('change', sync)
+    }, [])
+
+    if (reduceMotion || coarsePointer) {
+        return <StaticBlueGradients />
+    }
+
     return (
         <div
             aria-hidden
@@ -32,7 +101,8 @@ export default function AnimatedBlueGradients() {
                     maxHeight: 780,
                     top: '-18%',
                     left: '-14%',
-                    background: 'radial-gradient(circle at 38% 42%, rgba(82, 155, 255, 0.26), rgba(31, 87, 173, 0.06) 58%, transparent 76%)',
+                    background:
+                        'radial-gradient(circle at 38% 42%, rgba(82, 155, 255, 0.26), rgba(31, 87, 173, 0.06) 58%, transparent 76%)',
                 }}
                 animate={{
                     x: [0, 28, -14, 0],
@@ -58,7 +128,8 @@ export default function AnimatedBlueGradients() {
                     maxHeight: 700,
                     bottom: '-20%',
                     right: '-12%',
-                    background: 'radial-gradient(circle at 50% 50%, rgba(69, 139, 255, 0.22), rgba(21, 67, 141, 0.05) 62%, transparent 78%)',
+                    background:
+                        'radial-gradient(circle at 50% 50%, rgba(69, 139, 255, 0.22), rgba(21, 67, 141, 0.05) 62%, transparent 78%)',
                 }}
                 animate={{
                     x: [0, -24, 12, 0],
@@ -75,4 +146,3 @@ export default function AnimatedBlueGradients() {
         </div>
     )
 }
-

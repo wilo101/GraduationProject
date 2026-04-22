@@ -77,17 +77,32 @@ const HouseMap = ({
 
     /** Idle drift — paused during deploy / navigate / scan */
     useEffect(() => {
+        let driftMs = 900
+        let maxTrail = 48
+        if (typeof window !== 'undefined') {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                driftMs = 4200
+                maxTrail = 18
+            } else if (window.matchMedia('(pointer: coarse)').matches) {
+                driftMs = 2600
+                maxTrail = 28
+            }
+        }
+
         const step = () => {
-            if (!pauseDriftRef.current) {
+            const hidden = typeof document !== 'undefined' && document.hidden
+            const interval = hidden ? Math.max(driftMs * 4, 4500) : driftMs
+
+            if (!pauseDriftRef.current && !hidden) {
                 setTrail((cur) => {
                     const last = cur[cur.length - 1] || { x: 35, y: 40 }
                     const nx = Math.max(6, Math.min(94, last.x + (Math.random() - 0.5) * 2.2))
                     const ny = Math.max(6, Math.min(94, last.y + (Math.random() - 0.5) * 2.2))
                     const next = [...cur, { x: nx, y: ny }]
-                    return next.length > 48 ? next.slice(next.length - 48) : next
+                    return next.length > maxTrail ? next.slice(next.length - maxTrail) : next
                 })
             }
-            tRef.current = window.setTimeout(step, 900)
+            tRef.current = window.setTimeout(step, interval)
         }
         step()
         return () => window.clearTimeout(tRef.current)
