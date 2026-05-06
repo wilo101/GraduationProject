@@ -18,10 +18,6 @@ export function isDemoBypassEmail(email) {
 /** @deprecated use isDemoBypassEmail */
 export const isDevBypassEmail = isDemoBypassEmail
 
-export function isDemoCredentials(email, password) {
-    return isDemoBypassEmail(email) && password === DEMO_PASSWORD
-}
-
 export function buildBypassSession(email, options = {}) {
     const e = email.trim()
     const fullName = options.fullName?.trim() || 'Demo User'
