@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { formatSupabaseAuthError } from '../lib/authErrors'
 import { markSmoothAppEnter } from '../lib/appEnterTransition'
+import { DEMO_EMAIL, DEMO_PASSWORD, isDemoBypassEmail } from '../lib/devAuthBypass'
 import { consumeOAuthSearchParamsIfError, getAuthRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
 
 const googleIcon = (
@@ -19,7 +20,7 @@ const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
 const ICON = 1.75
 
 export default function Register() {
-    const { isAuthenticated, loading } = useAuth()
+    const { isAuthenticated, loading, loginDevBypass } = useAuth()
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const oauthError = searchParams.get('error')
@@ -48,17 +49,36 @@ export default function Register() {
         e.preventDefault()
         setFormError('')
         resetErrors()
+        const trimmedEmail = email.trim()
+        const demoCredentialsMatch = Boolean(password && isDemoBypassEmail(trimmedEmail) && password === DEMO_PASSWORD)
+        const demoSignupOk =
+            fullName.trim().length >= 2 && trimmedEmail && emailOk(trimmedEmail) && demoCredentialsMatch
+
         const next = { fullName: '', email: '', password: '' }
         if (fullName.trim().length < 2) next.fullName = 'Enter your first and last name.'
-        if (!email.trim()) next.email = 'Email is required.'
-        else if (!emailOk(email)) next.email = 'Use a valid email address.'
+        if (!trimmedEmail) next.email = 'Email is required.'
+        else if (!emailOk(trimmedEmail)) next.email = 'Use a valid email address.'
         if (!password) next.password = 'Choose a password.'
-        else if (password.length < 8) next.password = 'Use at least 8 characters.'
+        else if (!demoCredentialsMatch && password.length < 8) next.password = 'Use at least 8 characters.'
         setErrors(next)
         if (next.fullName || next.email || next.password) return
 
+        if (demoSignupOk) {
+            setSubmitting(true)
+            try {
+                loginDevBypass(trimmedEmail, { fullName: fullName.trim() })
+                markSmoothAppEnter()
+                navigate('/')
+            } finally {
+                setSubmitting(false)
+            }
+            return
+        }
+
         if (!canUseSupabase) {
-            setFormError('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env')
+            setFormError(
+                `Supabase is not configured. Either use the demo (${DEMO_EMAIL} / ${DEMO_PASSWORD}) on Sign in, or add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.`
+            )
             return
         }
 
@@ -113,10 +133,24 @@ export default function Register() {
         <>
             <header>
                 <h1 className="auth-display">Create account</h1>
-                <p className="auth-lede">One profile ties your robot sessions, maps, and alerts together.</p>
+                <p className="auth-lede">
+                    One profile ties robot sessions, maps, and alerts together. Prefer a quick tour?{' '}
+                    <Link to="/login" className="auth-footer-link">
+                        Sign in with the demo
+                    </Link>
+                    {' — '}same email and password shown there.
+                </p>
+                <p className="auth-flash auth-flash--info" role="region" aria-label="Demo account">
+                    <strong style={{ fontWeight: 600 }}>Demo account</strong>
+                    {' — '}Email{' '}
+                    <span style={{ userSelect: 'all' }}>{DEMO_EMAIL}</span>
+                    {' · '}Password{' '}
+                    <span style={{ userSelect: 'all' }}>{DEMO_PASSWORD}</span>
+                    {' '}You can also enter these here with your name to enter the app without Supabase.
+                </p>
                 {!isSupabaseConfigured() ? (
-                    <p className="form-error" role="alert" style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                        Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in a root .env file.
+                    <p className="auth-flash auth-flash--notice" role="status" style={{ marginBottom: '1rem', textAlign: 'center' }}>
+                        Supabase keys are optional: use the demo credentials above or link your own backend later (.env.example).
                     </p>
                 ) : null}
                 {oauthError === 'google' ? (
@@ -172,7 +206,7 @@ export default function Register() {
                             className="auth-input"
                             type="email"
                             autoComplete="email"
-                            placeholder="mohamed.marey@example.com"
+                            placeholder={DEMO_EMAIL}
                             value={email}
                             onChange={(e) => {
                                 setEmail(e.target.value)

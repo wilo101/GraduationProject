@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { formatSupabaseAuthError } from '../lib/authErrors'
 import { consumeOAuthSearchParamsIfError, getAuthRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
 import { markSmoothAppEnter } from '../lib/appEnterTransition'
-import { isDevBypassEmail } from '../lib/devAuthBypass'
+import { DEMO_EMAIL, DEMO_PASSWORD, isDemoBypassEmail } from '../lib/devAuthBypass'
 
 const googleIcon = (
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
@@ -72,17 +72,21 @@ export default function Login() {
         resetErrors()
 
         const trimmedEmail = email.trim()
-        const bypass = isDevBypassEmail(trimmedEmail)
+        const demoEmail = isDemoBypassEmail(trimmedEmail)
 
         const next = { email: '', password: '' }
         if (!trimmedEmail) next.email = 'Enter the email you signed up with.'
         else if (!emailOk(email)) next.email = 'That does not look like a valid email address.'
         if (!password) next.password = 'Password is required.'
-        else if (!bypass && password.length < 8) next.password = 'Use at least 8 characters.'
+        else if (!demoEmail && password.length < 8) next.password = 'Use at least 8 characters.'
         setErrors(next)
         if (next.email || next.password) return
 
-        if (bypass) {
+        if (demoEmail) {
+            if (password !== DEMO_PASSWORD) {
+                setFlash(`That password does not match the demo account. Use ${DEMO_PASSWORD}.`, 'notice')
+                return
+            }
             setSubmitting(true)
             try {
                 loginDevBypass(trimmedEmail)
@@ -143,7 +147,17 @@ export default function Login() {
         <>
             <header>
                 <h1 className="auth-display">Welcome back</h1>
-                <p className="auth-lede">Use your Augustus credentials. Maps and feeds load after you sign in.</p>
+                <p className="auth-lede">
+                    Sign in to open the dashboard, maps, and camera feeds. No account yet? Use the demo below or create
+                    your own profile on the next page.
+                </p>
+                <p className="auth-flash auth-flash--info" role="region" aria-label="Demo account">
+                    <strong style={{ fontWeight: 600 }}>Demo account</strong>
+                    {' — '}Email{' '}
+                    <span style={{ userSelect: 'all' }}>{DEMO_EMAIL}</span>
+                    {' · '}Password{' '}
+                    <span style={{ userSelect: 'all' }}>{DEMO_PASSWORD}</span>
+                </p>
                 {postRegisterHint ? (
                     <p className="auth-flash auth-flash--info" role="status">
                         Check your inbox for a confirmation link, then sign in here with the same password. After that,
@@ -151,8 +165,9 @@ export default function Login() {
                     </p>
                 ) : null}
                 {!isSupabaseConfigured() ? (
-                    <p className="auth-flash auth-flash--alert" role="alert">
-                        Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in a root .env file (copy from .env.example).
+                    <p className="auth-flash auth-flash--notice" role="status">
+                        Backend auth is optional: the demo login above works without Supabase. To enable email signup and
+                        Google sign-in, set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (see .env.example).
                     </p>
                 ) : null}
                 {oauthError === 'google' ? (
@@ -185,7 +200,7 @@ export default function Login() {
                             className="auth-input"
                             type="email"
                             autoComplete="email"
-                            placeholder="mohamed.marey@example.com"
+                            placeholder={DEMO_EMAIL}
                             value={email}
                             onChange={(e) => {
                                 setEmail(e.target.value)

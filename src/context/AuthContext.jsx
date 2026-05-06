@@ -77,8 +77,8 @@ export function AuthProvider({ children }) {
 
     const isAuthenticated = Boolean(session)
 
-    const loginDevBypass = useCallback((email) => {
-        const s = buildBypassSession(email)
+    const loginDevBypass = useCallback((email, options) => {
+        const s = buildBypassSession(email, options)
         saveBypassSession(s)
         setSession(s)
     }, [])
